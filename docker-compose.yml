@@ -42,3 +42,7 @@ services:
   payment-db:
     image: redis:latest
     command: redis-server --requirepass redis --maxmemory 512mb
+
+  cockroach-db:
+    image: cockroachdb/cockroach:latest
+    command: start-single-node --max-sql-memory 512mb --insecure

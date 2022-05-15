@@ -44,7 +44,7 @@ def remove_item(order_id, item_id):
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
-    pass
+    return {"this": "is a", "json": "example"}
 
 
 @app.post('/checkout/<order_id>')
