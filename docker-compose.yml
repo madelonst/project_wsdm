@@ -21,6 +21,19 @@ services:
     image: redis:latest
     command: redis-server --requirepass redis --maxmemory 512mb
 
+  order-service-cr-test:
+    build: ./order_crdb_test
+    image: order_crdb_test:latest
+    environment:
+      - GATEWAY_URL=http://gateway:80
+    command: gunicorn -b 0.0.0.0:5000 app:app
+    env_file:
+      - env/order_cockroach.env
+
+  order-db-cr-test:
+    image: cockroachdb/cockroach:latest
+    command: start-single-node --max-sql-memory 512mb --insecure
+
   stock-service:
     build: ./stock
     image: stock:latest
