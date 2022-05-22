@@ -51,10 +51,10 @@ def create_user():
 
 @app.get('/find_user/<user_id>')
 def find_user(user_id: int):
-    for event in consumer:
-        event_data = event.value
+    # for event in consumer:
+    #     return event.value
         # Do whatever you want
-        logging.debug(event_data)
+        # logging.debug(event_data)
         # sleep(2)
     # with conn.cursor() as cur:
     #     cur.execute(
