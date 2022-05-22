@@ -7,6 +7,7 @@ import redis
 from json import dumps
 from kafka import KafkaProducer
 
+import logging
 
 gateway_url = os.environ['GATEWAY_URL']
 
@@ -18,7 +19,7 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
                               db=int(os.environ['REDIS_DB']))
 
 producer = KafkaProducer(
-    bootstrap_servers=['localhost:9092'],
+    bootstrap_servers=['kafka:9093'],
     api_version=(0,11,5),
     value_serializer=lambda x: dumps(x).encode('utf-8')
 )
@@ -52,7 +53,7 @@ def remove_item(order_id, item_id):
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
-
+    logging.debug("test")
     data = {'counter': order_id}
     producer.send('topic_test', value=data)
         # sleep(0.5)

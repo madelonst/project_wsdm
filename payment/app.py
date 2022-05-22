@@ -22,7 +22,7 @@ from json import loads
 
 consumer = KafkaConsumer(
     'topic_test',
-    bootstrap_servers=['localhost:9092'],
+    bootstrap_servers=['kafka:9093'],
     auto_offset_reset='earliest',
     enable_auto_commit=True,
     api_version=(0,11,5),
