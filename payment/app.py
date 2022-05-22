@@ -15,6 +15,20 @@ import logging
 import os
 from argparse import ArgumentParser, RawTextHelpFormatter
 import psycopg2
+from kafka import KafkaConsumer
+from json import loads
+# from time import sleep
+
+
+consumer = KafkaConsumer(
+    'topic_test',
+    bootstrap_servers=['localhost:9092'],
+    auto_offset_reset='earliest',
+    enable_auto_commit=True,
+    group_id='my-group-id',
+    value_deserializer=lambda x: loads(x.decode('utf-8'))
+)
+
 
 app = Flask("payment-service")
 
@@ -36,15 +50,20 @@ def create_user():
 
 @app.get('/find_user/<user_id>')
 def find_user(user_id: int):
-    with conn.cursor() as cur:
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS accounts (id INT PRIMARY KEY, balance INT)"
-        )
-        cur.execute(
-            "INSERT INTO accounts (id, balance) VALUES ("+user_id+", 1000)")
-        logging.debug("create_accounts(): status message: %s",
-                      cur.statusmessage)
-    conn.commit()
+    for event in consumer:
+        event_data = event.value
+        # Do whatever you want
+        logging.debug(event_data)
+        # sleep(2)
+    # with conn.cursor() as cur:
+    #     cur.execute(
+    #         "CREATE TABLE IF NOT EXISTS accounts (id INT PRIMARY KEY, balance INT)"
+    #     )
+    #     cur.execute(
+    #         "INSERT INTO accounts (id, balance) VALUES ("+user_id+", 1000)")
+    #     logging.debug("create_accounts(): status message: %s",
+    #                   cur.statusmessage)
+    # conn.commit()
     return {"SUCCESSS????": "hI"}
 
 
