@@ -17,9 +17,9 @@ services:
     env_file:
       - env/order_redis.env
 
-  order-db:
-    image: redis:latest
-    command: redis-server --requirepass redis --maxmemory 512mb
+#  order-db:
+#    image: redis:latest
+#    command: redis-server --requirepass redis --maxmemory 512mb
 
   stock-service:
     build: ./stock
@@ -28,9 +28,9 @@ services:
     env_file:
       - env/stock_redis.env
 
-  stock-db:
-    image: redis:latest
-    command: redis-server --requirepass redis --maxmemory 512mb
+#  stock-db:
+#    image: redis:latest
+#    command: redis-server --requirepass redis --maxmemory 512mb
 
   payment-service:
     build: ./payment

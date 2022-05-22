@@ -2,50 +2,57 @@ import os
 import atexit
 
 from flask import Flask
-import redis
+# import redis
 
 from math import floor
-import os
-import random
 import uuid
-
 import time
 import random
 import logging
-import os
 from argparse import ArgumentParser, RawTextHelpFormatter
 import psycopg2
 
 app = Flask("payment-service")
 
-db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
-                              port=int(os.environ['REDIS_PORT']),
-                              password=os.environ['REDIS_PASSWORD'],
-                              db=int(os.environ['REDIS_DB']))
+
+
+# db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
+#                               port=int(os.environ['REDIS_PORT']),
+#                               password=os.environ['REDIS_PASSWORD'],
+#                               db=int(os.environ['REDIS_DB']))
 
 db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
 conn = psycopg2.connect(db_url)
 
+with conn.cursor() as cur:
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS accounts (user_id INT PRIMARY KEY, credit INT)"
+    )
+    conn.commit()
+
 def close_db_connection():
     db.close()
+
 atexit.register(close_db_connection)
 
+
+
+user_id_counter = 0
 @app.post('/create_user')
 def create_user():
-    pass
-
-@app.get('/find_user/<user_id>')
-def find_user(user_id: int):
+    global user_id_counter
+    user_id_counter = user_id_counter + 1
     with conn.cursor() as cur:
         cur.execute(
-            "CREATE TABLE IF NOT EXISTS accounts (id INT PRIMARY KEY, balance INT)"
-        )
-        cur.execute(
-            "INSERT INTO accounts (id, balance) VALUES ("+user_id+", 1000)")
+            "INSERT INTO accounts (user_id, credit) VALUES ({}, 0)".format(user_id_counter))
         logging.debug("create_accounts(): status message: %s",
                       cur.statusmessage)
     conn.commit()
-    return {"SUCCESSS????": "hI"}
+    return {"user_id": user_id_counter}
+
+@app.get('/find_user/<user_id>')
+def find_user(user_id: int):
+    pass
 
 
 @app.post('/add_funds/<user_id>/<amount>')
