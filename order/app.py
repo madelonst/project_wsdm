@@ -19,6 +19,7 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
 
 producer = KafkaProducer(
     bootstrap_servers=['localhost:9092'],
+    api_version=(0,11,5),
     value_serializer=lambda x: dumps(x).encode('utf-8')
 )
 
@@ -51,12 +52,11 @@ def remove_item(order_id, item_id):
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
-    for j in range(9999):
-        print("Iteration", j)
-        data = {'counter': j}
-        producer.send('topic_test', value=data)
+
+    data = {'counter': order_id}
+    producer.send('topic_test', value=data)
         # sleep(0.5)
-    return {"this": "is a", "json": "example"}
+    return data
 
 
 @app.post('/checkout/<order_id>')

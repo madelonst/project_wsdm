@@ -25,6 +25,7 @@ consumer = KafkaConsumer(
     bootstrap_servers=['localhost:9092'],
     auto_offset_reset='earliest',
     enable_auto_commit=True,
+    api_version=(0,11,5),
     group_id='my-group-id',
     value_deserializer=lambda x: loads(x.decode('utf-8'))
 )
@@ -53,7 +54,7 @@ def find_user(user_id: int):
     for event in consumer:
         event_data = event.value
         # Do whatever you want
-        print(event_data)
+        logging.debug(event_data)
         # sleep(2)
     # with conn.cursor() as cur:
     #     cur.execute(
