@@ -16,6 +16,8 @@ services:
     command: gunicorn -b 0.0.0.0:5000 app:app
     env_file:
       - env/order_redis.env
+    ports:
+      - "5001:5000"
 
   order-db:
     image: redis:latest
@@ -46,3 +48,10 @@ services:
   cockroach-db:
     image: cockroachdb/cockroach:latest
     command: start-single-node --max-sql-memory 512mb --insecure
+
+  connection-manager:
+    build: ./connection_manager
+    image: connection_manager:latest
+    command: gunicorn -b 0.0.0.0:5000 app:app
+    ports:
+      - "5000:5000"
