@@ -53,7 +53,7 @@ def find_user(user_id: int):
     for event in consumer:
         event_data = event.value
         # Do whatever you want
-        logging.debug(event_data)
+        print(event_data)
         # sleep(2)
     # with conn.cursor() as cur:
     #     cur.execute(
