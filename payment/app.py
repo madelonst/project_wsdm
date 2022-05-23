@@ -41,6 +41,19 @@ db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
 db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
 conn = psycopg2.connect(db_url)
 
+for event in consumer:
+    event_data = event.value['counter']
+    print(event)
+    with conn.cursor() as cur:
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS accounts (id INT PRIMARY KEY, balance INT)"
+        )
+        cur.execute(
+            "UPDATE accounts SET balance = "+event_data+"WHERE id = 1")
+        logging.debug("create_accounts(): status message: %s",
+                      cur.statusmessage)
+    conn.commit()
+
 def close_db_connection():
     db.close()
 atexit.register(close_db_connection)
