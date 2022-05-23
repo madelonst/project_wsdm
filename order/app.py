@@ -2,7 +2,6 @@ import os
 import atexit
 
 from flask import Flask
-# import redis
 
 from math import floor
 import uuid
@@ -17,29 +16,8 @@ gateway_url = os.environ['GATEWAY_URL']
 
 app = Flask("order-service")
 
-# db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
-#                               port=int(os.environ['REDIS_PORT']),
-#                               password=os.environ['REDIS_PASSWORD'],
-#                               db=int(os.environ['REDIS_DB']))
-
-
 db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
 conn = psycopg2.connect(db_url)
-
-with conn.cursor() as cur:
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS order_headers (order_id INT PRIMARY KEY, user_id INT, paid BOOLEAN)"
-    )
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS order_items (order_id INT PRIMARY KEY, item INT, unit_price INT)"
-    )
-    conn.commit()
-
-def close_db_connection():
-    db.close()
-
-
-atexit.register(close_db_connection)
 
 
 @app.post('/create/<user_id>')
