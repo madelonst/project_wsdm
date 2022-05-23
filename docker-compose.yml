@@ -14,30 +14,18 @@ services:
     environment:
       - GATEWAY_URL=http://gateway:80
     command: gunicorn -b 0.0.0.0:5000 app:app
-    env_file:
-      - env/order_redis.env
 
-#  order-db:
-#    image: redis:latest
-#    command: redis-server --requirepass redis --maxmemory 512mb
 
   stock-service:
     build: ./stock
     image: stock:latest
     command: gunicorn -b 0.0.0.0:5000 app:app
-    env_file:
-      - env/stock_redis.env
 
-#  stock-db:
-#    image: redis:latest
-#    command: redis-server --requirepass redis --maxmemory 512mb
 
   payment-service:
     build: ./payment
     image: user:latest
     command: gunicorn -b 0.0.0.0:5000 app:app
-    env_file:
-      - env/payment_redis.env
 
 
   cockroach-db:

@@ -2,7 +2,6 @@ import os
 import atexit
 
 from flask import Flask
-# import redis
 
 from math import floor
 import uuid
@@ -14,11 +13,6 @@ import psycopg2
 
 
 app = Flask("stock-service")
-
-# db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
-#                               port=int(os.environ['REDIS_PORT']),
-#                               password=os.environ['REDIS_PASSWORD'],
-#                               db=int(os.environ['REDIS_DB']))
 
 
 db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
