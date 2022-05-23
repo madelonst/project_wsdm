@@ -19,9 +19,9 @@ services:
     ports:
       - "5001:5000"
 
-  order-db:
-    image: redis:latest
-    command: redis-server --requirepass redis --maxmemory 512mb
+#  order-db:
+#    image: redis:latest
+#    command: redis-server --requirepass redis --maxmemory 512mb
 
   stock-service:
     build: ./stock
@@ -30,9 +30,9 @@ services:
     env_file:
       - env/stock_redis.env
 
-  stock-db:
-    image: redis:latest
-    command: redis-server --requirepass redis --maxmemory 512mb
+#  stock-db:
+#    image: redis:latest
+#    command: redis-server --requirepass redis --maxmemory 512mb
 
   payment-service:
     build: ./payment
@@ -41,11 +41,9 @@ services:
     env_file:
       - env/payment_redis.env
 
-  payment-db:
-    image: redis:latest
-    command: redis-server --requirepass redis --maxmemory 512mb
-
   cockroach-db:
+    container_name: cockroach-db
+    hostname: cockroach-db
     image: cockroachdb/cockroach:latest
     command: start-single-node --max-sql-memory 512mb --insecure
 
@@ -55,3 +53,22 @@ services:
     command: gunicorn -b 0.0.0.0:5000 app:app
     ports:
       - "5000:5000"
+
+  payment-db:
+    container_name: payment-db
+    hostname: payment-db
+    image: cockroachdb/cockroach:latest
+    command: start --cluster-name=example-nginx --logtostderr=WARNING --log-file-verbosity=WARNING --insecure --join=cockroach-db
+    depends_on:
+      - cockroach-db
+
+  lb:
+    container_name: lb
+    hostname: lb
+    build: ./nginx
+    ports:
+      - "26257:26257"
+      - "8080:8080"
+    depends_on:
+      - cockroach-db
+      - payment-db
