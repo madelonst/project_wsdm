@@ -18,18 +18,6 @@ app = Flask("stock-service")
 db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
 conn = psycopg2.connect(db_url)
 
-with conn.cursor() as cur:
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS stock (item_id INT PRIMARY KEY, unit_price INT, stock_qty INT)"
-    )
-    conn.commit()
-
-def close_db_connection():
-    db.close()
-
-
-atexit.register(close_db_connection)
-
 item_id_counter = 0
 
 @app.post('/item/create/<price>')

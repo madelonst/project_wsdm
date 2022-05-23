@@ -14,18 +14,22 @@ services:
     environment:
       - GATEWAY_URL=http://gateway:80
     command: gunicorn -b 0.0.0.0:5000 app:app
-
+    depends_on:
+      - cockroach-db
 
   stock-service:
     build: ./stock
     image: stock:latest
     command: gunicorn -b 0.0.0.0:5000 app:app
-
+    depends_on:
+      - cockroach-db
 
   payment-service:
     build: ./payment
     image: user:latest
     command: gunicorn -b 0.0.0.0:5000 app:app
+    depends_on:
+      - cockroach-db
 
 
   cockroach-db:
@@ -35,13 +39,21 @@ services:
     command: start-single-node --cluster-name=example-nginx --logtostderr=WARNING --log-file-verbosity=WARNING --insecure
 
 
-  payment-db:
-    container_name: payment-db
-    hostname: payment-db
+  cockroach-db2:
+    container_name: cockroach-db2
+    hostname: cockroach-db2
     image: cockroachdb/cockroach:latest
     command: start --cluster-name=example-nginx --logtostderr=WARNING --log-file-verbosity=WARNING --insecure --join=cockroach-db
     depends_on:
       - cockroach-db
+
+  db-init:
+    build: ./db-init
+    image: db-init:latest
+    depends_on:
+      - cockroach-db
+      - cockroach-db2
+    #command: gunicorn -b 0.0.0.0:5000 app:app
 
   lb:
     container_name: lb
@@ -52,4 +64,4 @@ services:
       - "8080:8080"
     depends_on:
       - cockroach-db
-      - payment-db
+      - cockroach-db2

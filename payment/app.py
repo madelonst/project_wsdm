@@ -2,7 +2,6 @@ import os
 import atexit
 
 from flask import Flask
-# import redis
 
 from math import floor
 import uuid
@@ -17,18 +16,6 @@ app = Flask("payment-service")
 
 db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
 conn = psycopg2.connect(db_url)
-
-with conn.cursor() as cur:
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS accounts (user_id INT PRIMARY KEY, credit INT)"
-    )
-    conn.commit()
-
-def close_db_connection():
-    db.close()
-
-atexit.register(close_db_connection)
-
 
 
 user_id_counter = 0
