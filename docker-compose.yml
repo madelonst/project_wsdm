@@ -15,21 +15,21 @@ services:
       - GATEWAY_URL=http://gateway:80
     command: gunicorn -b 0.0.0.0:5000 app:app
     depends_on:
-      - cockroach-db
+      - connection_manager
 
   stock-service:
     build: ./stock
     image: stock:latest
     command: gunicorn -b 0.0.0.0:5000 app:app
     depends_on:
-      - cockroach-db
+      - connection_manager
 
   payment-service:
     build: ./payment
     image: user:latest
     command: gunicorn -b 0.0.0.0:5000 app:app
     depends_on:
-      - cockroach-db
+      - connection_manager
 
   cockroach-db:
     container_name: cockroach-db
@@ -42,7 +42,7 @@ services:
     image: connection_manager:latest
     command: gunicorn -b 0.0.0.0:5000 app:app
     depends_on:
-      - cockroach-db
+      - lb
     ports:
       - "5000:5000"
 
@@ -60,15 +60,15 @@ services:
     depends_on:
       - cockroach-db
       - cockroach-db2
-    #command: gunicorn -b 0.0.0.0:5000 app:app
 
   lb:
     container_name: lb
     hostname: lb
     build: ./nginx
+    # This exposes ports to outside docker, exposing database access to users is not a good idea.. Therefore only expose to localhost
     ports:
-      - "26257:26257"
-      - "8080:8080"
+      - "127.0.0.1:26257:26257"
+      - "127.0.0.1:8080:8080"
     depends_on:
       - cockroach-db
       - cockroach-db2

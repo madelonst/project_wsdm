@@ -1,5 +1,6 @@
 import os
 import atexit
+import string
 
 from flask import Flask
 
@@ -10,6 +11,7 @@ import random
 import logging
 from argparse import ArgumentParser, RawTextHelpFormatter
 import psycopg2
+import cmi
 
 
 app = Flask("stock-service")
@@ -18,20 +20,14 @@ app = Flask("stock-service")
 db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
 conn = psycopg2.connect(db_url)
 
-item_id_counter = 0
-
 @app.post('/item/create/<price>')
 def create_item(price: int):
-    global item_id_counter
-    item_id_counter = item_id_counter + 1
-    with conn.cursor() as cur:
-        cur.execute(
-            "INSERT INTO stock (item_id, unit_price, stock_qty) VALUES ({},{}, 0)".format(item_id_counter, price))
-        logging.debug("create_item(): status message: %s",
-                      cur.statusmessage)
-    conn.commit()
-    return {"item_id": item_id_counter}
-
+    while True:
+        item_id = random.randrange(999999999) #''.join(random.choices(string.ascii_uppercase + string.digits, k = 9))
+        response = cmi.exec("INSERT INTO stock (item_id, unit_price, stock_qty) VALUES ({},{}, 0) RETURNING item_id".format(item_id, price))
+        if response.status_code == 200:
+            return response.json()[0], 200
+    return "Error", 500
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
@@ -80,3 +76,4 @@ def remove_stock(item_id: str, amount: int):
                       cur.statusmessage)
     conn.commit()
     return "Success", 200
+

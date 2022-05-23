@@ -5,7 +5,7 @@ from psycopg2 import pool
 import string    
 import random
 
-db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
+db_url = "postgresql://root@lb:26257/defaultdb?sslmode=disable"
 
 pool = pool.SimpleConnectionPool(1, 20, db_url)
 
@@ -24,7 +24,7 @@ def execute_simple():
     return result
 
 
-@app.post('/start_trans')
+@app.post('/start_tx')
 def start_transaction():
     conn_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     conn = pool.getconn(conn_id)
@@ -36,7 +36,7 @@ def execute_conn(conn_id: str):
     sql = request.get_data()
     return execute(conn, sql)
 
-@app.post('/commit_trans/<conn_id>')
+@app.post('/commit_tx/<conn_id>')
 def commit_transaction(conn_id: str):
     conn = pool.getconn(conn_id)
     commit(conn)
