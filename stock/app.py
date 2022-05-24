@@ -1,79 +1,28 @@
-import os
-import atexit
-import string
-
 from flask import Flask
 
 from math import floor
-import uuid
-import time
 import random
-import logging
-from argparse import ArgumentParser, RawTextHelpFormatter
-import psycopg2
 import cmi
 
-
 app = Flask("stock-service")
-
-
-db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
-conn = psycopg2.connect(db_url)
 
 @app.post('/item/create/<price>')
 def create_item(price: int):
     while True:
         item_id = random.randrange(999999999) #''.join(random.choices(string.ascii_uppercase + string.digits, k = 9))
-        response = cmi.exec("INSERT INTO stock (item_id, unit_price, stock_qty) VALUES ({},{}, 0) RETURNING item_id".format(item_id, price))
+        response = cmi.exec("INSERT INTO stock (item_id, unit_price, stock_qty) VALUES (%s,%s, 0) RETURNING item_id", [item_id, price])
         if response.status_code == 200:
             return response.json()[0], 200
     return "Error", 500
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
-    stock_qty = 0
-    unit_price = 0
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT stock_qty, unit_price FROM stock WHERE item_id={}".format(item_id))
-        rows = cur.fetchall()
-        for row in rows:
-            stock_qty = row[0]
-            unit_price = row[1]
-    return {"stock": stock_qty, "price": unit_price}
-
+    return cmi.exec("SELECT stock_qty, unit_price FROM stock WHERE item_id=%s", [item_id]).json()[0], 200
 
 @app.post('/add/<item_id>/<amount>')
 def add_stock(item_id: str, amount: int):
-    new_amount = 0
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT stock_qty FROM stock WHERE item_id={}".format(item_id))
-        rows = cur.fetchall()
-        for row_val in rows:
-            new_amount = int(row_val[0]) + int(amount)
-        cur.execute(
-            "UPDATE stock SET stock_qty = {} WHERE item_id={}".format(new_amount, item_id))
-        logging.debug("create_item(): status message: %s",
-                      cur.statusmessage)
-    conn.commit()
-    return "Success", 200
-
+    return cmi.exec("UPDATE stock SET stock_qty = stock_qty + %s WHERE item_id=%s AND stock_qty + %s > stock_qty", [amount, item_id, amount]).json(), 200
 
 @app.post('/subtract/<item_id>/<amount>')
 def remove_stock(item_id: str, amount: int):
-    new_amount = 0
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT stock_qty FROM stock WHERE item_id={}".format(item_id))
-        rows = cur.fetchall()
-        for row_val in rows:
-            new_amount = int(row_val[0]) - int(amount)
-
-        cur.execute(
-            "UPDATE stock SET stock_qty = {} WHERE item_id={}".format(new_amount, item_id))
-        logging.debug("create_item(): status message: %s",
-                      cur.statusmessage)
-    conn.commit()
-    return "Success", 200
-
+    return cmi.exec("UPDATE stock SET stock_qty = stock_qty - %s WHERE item_id=%s AND stock_qty - %s > 0", [amount, item_id, amount]).json(), 200

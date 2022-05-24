@@ -18,7 +18,7 @@ atexit.register(close_db_connection)
 @app.post('/exec')
 def execute_simple():
     conn = pool.getconn()
-    sql = request.get_data()
+    sql = request.json
     result = execute(conn, sql)
     commit(conn)
     return result
@@ -33,7 +33,7 @@ def start_transaction():
 @app.post('/exec/<conn_id>')
 def execute_conn(conn_id: str):
     conn = pool.getconn(conn_id)
-    sql = request.get_data()
+    sql = request.json
     return execute(conn, sql)
 
 @app.post('/commit_tx/<conn_id>')
@@ -46,7 +46,7 @@ def commit_transaction(conn_id: str):
 def execute(conn, sql):
     cursor = conn.cursor()
     try:
-        cursor.execute(sql)
+        cursor.execute(sql["sql"], sql["params"])
     except Exception as err:
         return "Error: " + str(err)
     if cursor.description is None:
