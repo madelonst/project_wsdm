@@ -50,7 +50,7 @@ def execute(conn, sql):
     except Exception as err:
         return "Error: " + str(err)
     if cursor.description is None:
-        result = "Success"
+        result = cursor.fetchall()
     else:
         result = [dict((cursor.description[i][0], value) \
             for i, value in enumerate(row)) for row in cursor.fetchall()]
