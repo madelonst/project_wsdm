@@ -47,7 +47,7 @@ def remove_order(order_id):
         cur.execute(
             "DELETE FROM order_headers WHERE order_id={}".format(order_id))
     conn.commit()
-    return "SUCCES"
+    return "SUCCESS"
 
 # @app.post('/addItem/<order_id>/<item_id>')
 @app.get('/addItem/<order_id>/<item_id>')
@@ -63,7 +63,7 @@ def add_item(order_id, item_id):
     with conn.cursor() as cur:
         cur.execute("INSERT INTO order_items (order_id, item, unit_price) VALUES ({},{},{})".format(order_id, item_id, unit_price))
     conn.commit()
-    return "SUCCESS??"
+    return "SUCCESS"
 
 
 # @app.delete('/removeItem/<order_id>/<item_id>')
@@ -74,11 +74,34 @@ def remove_item(order_id, item_id):
             "DELETE FROM order_items WHERE order_id={} AND item={}".format(order_id, item_id))
     conn.commit()
     print("Removing item: " + str(item_id) + " from order: " + str(order_id) , flush=True)
-    return "SUCCES"
+    return "SUCCESS"
 
 @app.get('/find/<order_id>')
 def find_order(order_id):
-    return {"order_id": order_id, "paid": False, "items":[], "user_id": 0, "total_cost": 2}
+    items = []
+    with conn.cursor() as cur:
+        # Get the list of items
+        cur.execute(
+            "SELECT item FROM order_items WHERE order_id={}".format(order_id))
+        rows = cur.fetchall()
+        for row in rows:
+            items.append(row[0])
+
+        # Get the total cost of the order
+        cur.execute(
+            "SELECT SUM(unit_price) FROM order_items WHERE order_id={}".format(order_id))
+        rows = cur.fetchall()
+        total_cost = rows[0][0]
+
+        # Get the user_id and whether an order has been paid for
+        cur.execute(
+            "SELECT user_id, paid FROM order_headers WHERE order_id={}".format(order_id))
+        rows = cur.fetchall()
+        user_id = rows[0][0]
+        paid = rows[0][1]
+
+    conn.commit()
+    return {"order_id": order_id, "paid": paid, "items":items, "user_id": user_id, "total_cost": total_cost}
 
 
 # @app.post('/checkout/<order_id>')
@@ -86,31 +109,28 @@ def find_order(order_id):
 def checkout(order_id):
     # Get the user_id from the corresponding order_id
     with conn.cursor() as cur:
+        # Get the user id
         cur.execute(
             "SELECT user_id FROM order_headers WHERE order_id={}".format(order_id))
         rows = cur.fetchall()
-        for row in rows:
-            user_id = row[0]
-    conn.commit()
+        user_id = rows[0][0]
 
-    # Sum the total amount to pay
-    with conn.cursor() as cur:
+        # Calculate the total amount to pay
         cur.execute(
             "SELECT SUM(unit_price) FROM order_items WHERE order_id={}".format(order_id))
         rows = cur.fetchall()
-        for row in rows:
-            total_price = row[0]
-
+        total_cost = rows[0][0]
     conn.commit()
 
-    print("User id: " + str(user_id) + " total price: " + str(total_price))
-    response = requests.post(payment_url + "pay/" + str(user_id) + "/" + str(order_id) + "/" + str(total_price))
+    print("User id: " + str(user_id) + " total price: " + str(total_cost))
+    response = requests.post(payment_url + "pay/" + str(user_id) + "/" + str(order_id) + "/" + str(total_cost))
 
     if response.status_code == 200:
         print("Payment succesful", flush=True)
     else:
         print("Payment unsuccesful", flush=True)
 
+    # Substract all the necessary items from stock
     with conn.cursor() as cur:
         cur.execute(
             "SELECT item, count(item) FROM order_items WHERE order_id={} GROUP BY item".format(order_id))
@@ -126,7 +146,7 @@ def checkout(order_id):
 
     conn.commit()
 
-    return "Success!"
+    return "SUCCESS"
 
 
 
