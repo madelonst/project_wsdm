@@ -25,12 +25,10 @@ conn = psycopg2.connect(db_url)
 def close_db_connection():
     db.close()
 
-
 atexit.register(close_db_connection)
 
-
-# @app.post('/create/<user_id>')
-@app.get('/create/<user_id>')
+# @app.get('/create/<user_id>')
+@app.post('/create/<user_id>')
 def create_order(user_id):
     order_id = random.randrange(999999999)
     print(str(order_id) + " " + str(user_id), flush=True)
@@ -40,8 +38,8 @@ def create_order(user_id):
     conn.commit()
     return {"order_id": order_id}
 
-# @app.delete('/remove/<order_id>')
-@app.get('/remove/<order_id>')
+# @app.get('/remove/<order_id>')
+@app.delete('/remove/<order_id>')
 def remove_order(order_id):
     with conn.cursor() as cur:
         cur.execute(
@@ -49,8 +47,8 @@ def remove_order(order_id):
     conn.commit()
     return "SUCCESS"
 
-# @app.post('/addItem/<order_id>/<item_id>')
-@app.get('/addItem/<order_id>/<item_id>')
+# @app.get('/addItem/<order_id>/<item_id>')
+@app.post('/addItem/<order_id>/<item_id>')
 def add_item(order_id, item_id):
 
     # Get unit price of item
@@ -65,9 +63,8 @@ def add_item(order_id, item_id):
     conn.commit()
     return "SUCCESS"
 
-
-# @app.delete('/removeItem/<order_id>/<item_id>')
-@app.get('/removeItem/<order_id>/<item_id>')
+# @app.get('/removeItem/<order_id>/<item_id>')
+@app.delete('/removeItem/<order_id>/<item_id>')
 def remove_item(order_id, item_id):
     with conn.cursor() as cur:
         cur.execute(
@@ -104,8 +101,8 @@ def find_order(order_id):
     return {"order_id": order_id, "paid": paid, "items":items, "user_id": user_id, "total_cost": total_cost}
 
 
-# @app.post('/checkout/<order_id>')
-@app.get('/checkout/<order_id>')
+# @app.get('/checkout/<order_id>')
+@app.post('/checkout/<order_id>')
 def checkout(order_id):
     # Get the user_id from the corresponding order_id
     with conn.cursor() as cur:
@@ -147,6 +144,3 @@ def checkout(order_id):
     conn.commit()
 
     return "SUCCESS"
-
-
-
