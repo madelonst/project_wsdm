@@ -12,7 +12,7 @@ pool = pool.SimpleConnectionPool(1, 20, db_url)
 app = Flask("connection-manager-service")
 
 def close_db_connection():
-    pool.close()
+    pool.closeall()
 atexit.register(close_db_connection)
 
 @app.post('/exec')
@@ -24,11 +24,11 @@ def execute_simple():
     return result
 
 
-@app.post('/start_tx')
+@app.get('/start_tx')
 def start_transaction():
     conn_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     conn = pool.getconn(conn_id)
-    return conn_id
+    return conn_id, 200
 
 @app.post('/exec/<conn_id>')
 def execute_conn(conn_id: str):
@@ -40,7 +40,15 @@ def execute_conn(conn_id: str):
 def commit_transaction(conn_id: str):
     conn = pool.getconn(conn_id)
     commit(conn)
-    return "Success"
+    return "Success", 200
+
+@app.post('/cancel_tx/<conn_id>')
+def cancel_transaction(conn_id: str):
+    conn = pool.getconn(conn_id)
+    conn.close()
+    pool.putconn(conn)
+    return "Success", 200
+
 
 #Helper functions:
 def execute(conn, sql):
