@@ -14,7 +14,7 @@ import psycopg2
 app = Flask("payment-service")
 
 
-db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
+db_url = "postgresql://root@lb:26257/defaultdb?sslmode=disable"
 conn = psycopg2.connect(db_url)
 
 

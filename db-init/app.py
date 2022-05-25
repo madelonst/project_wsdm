@@ -22,7 +22,7 @@ with conn.cursor() as cur:
     )
     conn.commit()
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS order_items (order_id INT PRIMARY KEY, item INT, unit_price INT)"
+        "CREATE TABLE IF NOT EXISTS order_items (order_id INT, item INT, unit_price INT)"
     )
     conn.commit()
     cur.execute(

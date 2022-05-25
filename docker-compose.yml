@@ -7,6 +7,10 @@ services:
       - ./gateway_nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8000:80"
+    depends_on:
+      - order-service
+      - stock-service
+      - payment-service
 
   order-service:
     build: ./order

@@ -7,5 +7,6 @@ COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY ./app.py .
+COPY ./cmi.py .
 
 EXPOSE 5000
