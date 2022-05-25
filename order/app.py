@@ -58,7 +58,7 @@ def add_item(order_id, item_id):
     if response.status_code != 200:
         print("Request to " + stock_url + " failed")
     unit_price = response.json()["price"]
-    print("unit_price: " + unit_price, flush=True)
+    print("unit_price: " + str(unit_price), flush=True)
 
     with conn.cursor() as cur:
         cur.execute("INSERT INTO order_items (order_id, item, unit_price) VALUES ({},{},{})".format(order_id, item_id, unit_price))
@@ -87,27 +87,46 @@ def checkout(order_id):
     # Get the user_id from the corresponding order_id
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT user_id FROM order_headers WHERE order_id=".format(order_id))
+            "SELECT user_id FROM order_headers WHERE order_id={}".format(order_id))
         rows = cur.fetchall()
         for row in rows:
             user_id = row[0]
+    conn.commit()
 
     # Sum the total amount to pay
-    total_price = 0
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT unit_price FROM order_items WHERE order_id=".format(order_id))
+            "SELECT SUM(unit_price) FROM order_items WHERE order_id={}".format(order_id))
         rows = cur.fetchall()
         for row in rows:
-            total_price += row[0]
+            total_price = row[0]
 
-    response = requests.post(payment_url + "pay/" + user_id + "/" + order_id + "/" + total_price)
+    conn.commit()
+
+    print("User id: " + str(user_id) + " total price: " + str(total_price))
+    response = requests.post(payment_url + "pay/" + str(user_id) + "/" + str(order_id) + "/" + str(total_price))
 
     if response.status_code == 200:
         print("Payment succesful", flush=True)
+    else:
+        print("Payment unsuccesful", flush=True)
 
-    response = requests.post(stock_url + "subtract/" + item_id + "/" + amount)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT item, count(item) FROM order_items WHERE order_id={} GROUP BY item".format(order_id))
+        rows = cur.fetchall()
+        for row in rows:
+            item_id = row[0]
+            amount = row[1]
+            response = requests.post(str(stock_url) + "subtract/" + str(item_id) + "/" + str(amount))
+            if response.status_code == 200:
+                print("Substracted " + str(amount) + " item_id: " + str(item_id) + " from stock", flush=True)
+            else:
+                print("Substracting stock unsuccesful", flush=True)
 
-    if response.status_code == 200:
-        print("Substracting stock succesful", flush=True)
+    conn.commit()
+
+    return "Success!"
+
+
 
