@@ -43,7 +43,7 @@ def remove_credit(user_id: str, order_id: str, amount: int):
 
 @app.post('/cancel/<user_id>/<order_id>')
 def cancel_payment(user_id: str, order_id: str):
-    response = cmi.get_status("UPDATE accounts SET credit = credit + (SELECT sum(unit_price) FROM order_items WHERE order_id=%s) WHERE user_id=%s",
+    response = cmi.get_status("UPDATE accounts SET credit = credit + (SELECT SUM(unit_price) FROM order_items WHERE order_id=%s) WHERE user_id=%s",
                               [order_id, user_id])
     if response.status_code == 200:
         return cmi.get_status("UPDATE order_headers SET paid = FALSE WHERE order_id=%s", [order_id])
