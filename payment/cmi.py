@@ -14,11 +14,11 @@ def get_one(sql, params):
         return response.json()[0], 200
     return '{"status": "Error"}', 500
 
-# def get_all(sql, params):
-#     response = exec(sql, params)
-#     if response.status_code == 200:
-#         return {"items": response.json()}, 200
-#     return '{"status": "Error"}', 500
+def get_all(sql, params):
+    response = exec(sql, params)
+    if response.status_code == 200:
+        return {"items": response.json()}, 200
+    return '{"status": "Error"}', 500
 
 def get_status(sql, params):
     response = exec(sql + " RETURNING 'Success' AS status", params)

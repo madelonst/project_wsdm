@@ -9,8 +9,8 @@ import logging
 from argparse import ArgumentParser, RawTextHelpFormatter
 import psycopg2
 
-# db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
-# conn = psycopg2.connect(db_url)
+db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"
+conn = psycopg2.connect(db_url)
 
 with conn.cursor() as cur:
     cur.execute(

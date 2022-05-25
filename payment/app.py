@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 
 from math import floor
 import random
