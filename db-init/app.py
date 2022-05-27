@@ -1,12 +1,3 @@
-import os
-import atexit
-
-from math import floor
-import uuid
-import time
-import random
-import logging
-from argparse import ArgumentParser, RawTextHelpFormatter
 import psycopg2
 
 db_url = "postgresql://root@cockroach-db:26257/defaultdb?sslmode=disable"

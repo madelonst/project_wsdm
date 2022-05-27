@@ -1,9 +1,9 @@
-import os
 import atexit
 from flask import Flask, request, jsonify
 from psycopg2 import pool
 import string    
 import random
+# from time import strftime
 
 db_url = "postgresql://root@lb:26257/defaultdb?sslmode=disable"
 
@@ -14,6 +14,12 @@ app = Flask("connection-manager-service")
 def close_db_connection():
     pool.closeall()
 atexit.register(close_db_connection)
+
+# @app.after_request
+# def after_request(response):
+#     timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+#     print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
+#     return response
 
 @app.post('/exec')
 def execute_simple():
@@ -39,14 +45,15 @@ def execute_conn(conn_id: str):
 @app.post('/commit_tx/<conn_id>')
 def commit_transaction(conn_id: str):
     conn = pool.getconn(conn_id)
-    commit(conn)
+    commit(conn, conn_id)
     return "Success", 200
 
 @app.post('/cancel_tx/<conn_id>')
 def cancel_transaction(conn_id: str):
     conn = pool.getconn(conn_id)
+    conn.rollback()
     conn.close()
-    pool.putconn(conn)
+    pool.putconn(conn, conn_id, True)
     return "Success", 200
 
 
@@ -65,6 +72,7 @@ def execute(conn, sql):
     cursor.close()
     return jsonify(result)
 
-def commit(conn):
+def commit(conn, conn_id = None):
     conn.commit()
-    pool.putconn(conn)
+    conn.close()
+    pool.putconn(conn, conn_id, True)

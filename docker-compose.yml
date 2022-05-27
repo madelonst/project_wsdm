@@ -39,7 +39,7 @@ services:
     container_name: cockroach-db
     hostname: cockroach-db
     image: cockroachdb/cockroach:latest
-    command: start-single-node --max-sql-memory 512mb --insecure
+    command: start-single-node --max-sql-memory 512mb --logtostderr=WARNING --log-file-verbosity=WARNING --insecure
 
   connection-manager:
     build: ./connection_manager
@@ -54,7 +54,7 @@ services:
     container_name: cockroach-db2
     hostname: cockroach-db2
     image: cockroachdb/cockroach:latest
-    command: start --cluster-name=example-nginx --logtostderr=WARNING --log-file-verbosity=WARNING --insecure --join=cockroach-db
+    command: start --max-sql-memory 512mb --logtostderr=WARNING --log-file-verbosity=WARNING --insecure --join=cockroach-db
     depends_on:
       - cockroach-db
 

@@ -1,14 +1,20 @@
 from flask import Flask, request
 import requests
 import random
+from time import strftime
 
 import cmi
-
 
 app = Flask("order-service")
 
 stock_url = "http://stock-service:5000"
 payment_url = "http://payment-service:5000"
+
+# @app.after_request
+# def after_request(response):
+#     timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+#     print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
+#     return response
 
 @app.post('/create/<user_id>')
 def create_order(user_id):
@@ -30,16 +36,18 @@ def remove_order(order_id):
 def add_item(order_id, item_id):
     conn_id = request.headers.get("conn_id")
     connheaderset = conn_id != None
+
     if not connheaderset:
         conn_id = cmi.start_tx()
 
-    response = requests.get("{}/find/{}".format(stock_url, item_id), headers={"conn_id": conn_id})
+    #not an actual requirement:
+    response = requests.get(f"{stock_url}/find/{item_id}", headers={"conn_id": conn_id})
     if response.status_code != 200:
         if not connheaderset:
             cmi.cancel_tx(conn_id)
         return '{"done": false}', 400
     unit_price = response.json()["price"]
-    
+
     response = cmi.get_status("INSERT INTO order_items (order_id, item, unit_price) VALUES (%s,%s,%s)", [order_id, item_id, unit_price], conn_id)
 
     if not connheaderset:
@@ -64,23 +72,25 @@ def checkout(order_id):
     if not connheaderset:
         conn_id = cmi.start_tx()
 
-    response = cmi.get_one("SELECT user_id, SUM(unit_price) as total_cost, json_agg(item) as items FROM order_items WHERE order_id=%s", [order_id], conn_id)
-    if response.status_code != 200:
+    data, status_code = cmi.get_one("SELECT (SELECT user_id FROM order_headers WHERE order_id=%s) AS user_id, SUM(unit_price) AS total_cost, json_agg(item) AS items FROM order_items WHERE order_id=%s", [order_id, order_id], conn_id)
+    if status_code != 200:
         if not connheaderset:
             cmi.cancel_tx(conn_id)
         return '{"done": false}', 400
-    user_id = response["user_id"]
-    amount = response["total_cost"]
-    items = response["items"]
+    user_id = data["user_id"]
+    amount = data["total_cost"]
+    items = data["items"]
 
-    response = requests.get("{}/pay/{}/{}/{}".format(payment_url, user_id, order_id, amount), headers={"conn_id": conn_id})
+    response = requests.post(f"{payment_url}/pay/{user_id}/{order_id}/{amount}", headers={"conn_id": conn_id})
+    print(response.content, flush=True)
     if response.status_code != 200:
         if not connheaderset:
             cmi.cancel_tx(conn_id)
         return '{"done": false}', 400
     
     for item_id in items:
-        response = requests.get("{}/subtract/{}/{}".format(stock_url, item_id, 1), headers={"conn_id": conn_id})
+        response = requests.post(f"{stock_url}/subtract/{item_id}/1", headers={"conn_id": conn_id})
+        print(response.content, flush=True)
         if response.status_code != 200:
             if not connheaderset:
                 cmi.cancel_tx(conn_id)
