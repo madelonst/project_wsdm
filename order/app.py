@@ -1,7 +1,7 @@
 from flask import Flask, request
 import requests
 import random
-from time import strftime
+# from time import strftime
 
 import cmi
 
@@ -63,7 +63,7 @@ def remove_item(order_id, item_id):
 @app.get('/find/<order_id>')
 def find_order(order_id):
     conn_id = request.headers.get("conn_id")
-    return cmi.get_one("SELECT order_id, paid, json_agg(item) as items, user_id, SUM(unit_price) as total_cost FROM order_items WHERE order_id=%s", [order_id], conn_id)
+    return cmi.get_one("SELECT (SELECT order_id FROM order_headers WHERE order_id=%s) as order_id, (SELECT paid FROM order_headers WHERE order_id=%s) as paid, coalesce(json_agg(item), '[]'::json) as items, (SELECT user_id FROM order_headers WHERE order_id=%s) as user_id, coalesce(SUM(unit_price), 0) as total_cost FROM order_items WHERE order_id=%s", [order_id, order_id, order_id, order_id], conn_id)
 
 @app.post('/checkout/<order_id>')
 def checkout(order_id):
@@ -82,7 +82,6 @@ def checkout(order_id):
     items = data["items"]
 
     response = requests.post(f"{payment_url}/pay/{user_id}/{order_id}/{amount}", headers={"conn_id": conn_id})
-    print(response.content, flush=True)
     if response.status_code != 200:
         if not connheaderset:
             cmi.cancel_tx(conn_id)
@@ -90,7 +89,6 @@ def checkout(order_id):
     
     for item_id in items:
         response = requests.post(f"{stock_url}/subtract/{item_id}/1", headers={"conn_id": conn_id})
-        print(response.content, flush=True)
         if response.status_code != 200:
             if not connheaderset:
                 cmi.cancel_tx(conn_id)

@@ -1,7 +1,7 @@
 from flask import Flask, request
 import requests
 import random
-from time import strftime
+# from time import strftime
 
 import cmi
 
