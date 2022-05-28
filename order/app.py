@@ -63,7 +63,7 @@ def remove_item(order_id, item_id):
 @app.get('/find/<order_id>')
 def find_order(order_id):
     conn_id = request.headers.get("conn_id")
-    return cmi.get_one("SELECT (SELECT order_id FROM order_headers WHERE order_id=%s) as order_id, (SELECT paid FROM order_headers WHERE order_id=%s) as paid, coalesce(json_agg(item), '[]'::json) as items, (SELECT user_id FROM order_headers WHERE order_id=%s) as user_id, coalesce(SUM(unit_price), 0) as total_cost FROM order_items WHERE order_id=%s", [order_id, order_id, order_id, order_id], conn_id)
+    return cmi.get_one("SELECT %s as order_id, (SELECT paid FROM order_headers WHERE order_id=%s) as paid, coalesce(json_agg(item), '[]'::json) as items, (SELECT user_id FROM order_headers WHERE order_id=%s) as user_id, coalesce(SUM(unit_price), 0) as total_cost FROM order_items WHERE order_id=%s", [order_id, order_id, order_id, order_id], conn_id)
 
 @app.post('/checkout/<order_id>')
 def checkout(order_id):
