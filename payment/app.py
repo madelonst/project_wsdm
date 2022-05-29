@@ -67,7 +67,7 @@ def cancel_payment(user_id: str, order_id: str):
     if not connheaderset:
         conn_id = cmi.start_tx()
 
-    _, status_code = cmi.get_status("UPDATE accounts SET credit = credit + (SELECT SUM(unit_price) FROM order_items WHERE order_id=%s) WHERE user_id=%s",
+    _, status_code = cmi.get_status("UPDATE accounts SET credit = credit + CAST((SELECT SUM(unit_price) FROM order_items WHERE order_id=%s) AS INTEGER) WHERE user_id=%s",
                               [order_id, user_id], conn_id)
     if status_code != 200:
         if not connheaderset:
