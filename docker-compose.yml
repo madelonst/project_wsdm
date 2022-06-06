@@ -19,21 +19,21 @@ services:
       - GATEWAY_URL=http://gateway:80
     command: gunicorn -b 0.0.0.0:5000 app:app
     depends_on:
-      - connection_manager
+      - connection-manager
 
   stock-service:
     build: ./stock
     image: stock:latest
     command: gunicorn -b 0.0.0.0:5000 app:app
     depends_on:
-      - connection_manager
+      - connection-manager
 
   payment-service:
     build: ./payment
     image: user:latest
     command: gunicorn -b 0.0.0.0:5000 app:app
     depends_on:
-      - connection_manager
+      - connection-manager
 
   cockroach-db:
     container_name: cockroach-db
