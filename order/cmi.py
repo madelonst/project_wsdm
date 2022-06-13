@@ -8,7 +8,7 @@ URL = "http://connection-manager:5000"
 
 db_url = "postgresql://root@lb:26257/defaultdb?sslmode=disable"
 
-pool = pool.SimpleConnectionPool(1, 500, db_url)
+pool = pool.SimpleConnectionPool(1, 20, db_url)
 
 
 class ReturnType(object):
