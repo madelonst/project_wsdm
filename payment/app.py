@@ -1,6 +1,7 @@
 from flask import Flask, request
 import requests
 import random
+import re
 # from time import strftime
 
 import cmi
@@ -27,8 +28,10 @@ def create_user():
 @app.get('/find_user/<user_id>')
 def find_user(user_id: int):
     conn_id = request.headers.get("conn_id")
-    return cmi.get_one("SELECT user_id, credit FROM accounts WHERE user_id=%s", [user_id], conn_id)
-
+    res, status = cmi.get_one("SELECT user_id, credit FROM accounts WHERE user_id=%s", [user_id], conn_id)
+    if status == 200:
+        res["credit"] = float(res["credit"])
+    return res, status
 
 @app.post('/add_funds/<user_id>/<amount>')
 def add_credit(user_id: str, amount: int):
