@@ -1,7 +1,7 @@
 import atexit
 from flask import Flask, request, jsonify
 from psycopg2 import pool
-import string    
+import string
 import random
 # from time import strftime
 
@@ -63,14 +63,14 @@ def execute(conn, sql):
     try:
         cursor.execute(sql["sql"], sql["params"])
     except Exception as err:
-        return "Error: " + str(err)
+        return "Error: " + str(err), 500
     if cursor.description is None:
         result = cursor.fetchall()
     else:
         result = [dict((cursor.description[i][0], value) \
             for i, value in enumerate(row)) for row in cursor.fetchall()]
     cursor.close()
-    return jsonify(result)
+    return jsonify(result), 200
 
 def commit(conn, conn_id = None):
     conn.commit()
