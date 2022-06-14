@@ -6,7 +6,7 @@ from flask import jsonify
 
 URL = "http://connection-manager:5000"
 
-db_url = "postgresql://root@lb:26257/defaultdb?sslmode=disable"
+db_url = "postgresql://root@cockroachdb-public:26257/defaultdb?sslmode=disable"
 
 pool = pool.SimpleConnectionPool(1, 20, db_url)
 
