@@ -14,3 +14,4 @@ kubectl create \
 
 # One time database initialization
 #kubectl create -f cluster-init.yaml
+#kubectl create -f database-init.yaml
