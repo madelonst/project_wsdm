@@ -28,6 +28,7 @@ spec:
       containers:
         - name: connection-manager
           image: connection-manager:latest
+          imagePullPolicy: Never
           resources:
             limits:
               memory: "250Mi"
