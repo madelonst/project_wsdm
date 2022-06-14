@@ -1,40 +1,40 @@
-import os
-import atexit
+from flask import Flask, request
+# import requests
+import random
+# from time import strftime
 
-from flask import Flask
-import redis
-
+import cmi
 
 app = Flask("stock-service")
 
-db: redis.Redis = redis.Redis(host=os.environ['REDIS_HOST'],
-                              port=int(os.environ['REDIS_PORT']),
-                              password=os.environ['REDIS_PASSWORD'],
-                              db=int(os.environ['REDIS_DB']))
-
-
-def close_db_connection():
-    db.close()
-
-
-atexit.register(close_db_connection)
-
+# @app.after_request
+# def after_request(response):
+#     timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+#     print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
+#     return response
 
 @app.post('/item/create/<price>')
 def create_item(price: int):
-    pass
-
+    conn_id = request.headers.get("conn_id")
+    while True:
+        item_id = random.randrange(999999999) #''.join(random.choices(string.ascii_uppercase + string.digits, k = 9))
+        response = cmi.exec("INSERT INTO stock (item_id, unit_price, stock_qty) VALUES (%s,%s, 0) RETURNING item_id", [item_id, price], conn_id)
+        if response.status_code == 200:
+            result = response.json()
+            if len(result) == 1:
+                return result[0], 200
 
 @app.get('/find/<item_id>')
 def find_item(item_id: str):
-    pass
-
+    conn_id = request.headers.get("conn_id")
+    return cmi.get_one("SELECT stock_qty as stock, unit_price as price FROM stock WHERE item_id=%s", [item_id], conn_id)
 
 @app.post('/add/<item_id>/<amount>')
 def add_stock(item_id: str, amount: int):
-    pass
-
+    conn_id = request.headers.get("conn_id")
+    return cmi.get_status("UPDATE stock SET stock_qty = stock_qty + %s WHERE item_id=%s AND stock_qty + %s > stock_qty", [amount, item_id, amount], conn_id)
 
 @app.post('/subtract/<item_id>/<amount>')
 def remove_stock(item_id: str, amount: int):
-    pass
+    conn_id = request.headers.get("conn_id")
+    return cmi.get_status("UPDATE stock SET stock_qty = stock_qty - %s WHERE item_id=%s AND stock_qty - %s >= 0", [amount, item_id, amount], conn_id)
