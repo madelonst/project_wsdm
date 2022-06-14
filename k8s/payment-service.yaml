@@ -28,6 +28,7 @@ spec:
       containers:
         - name: payment
           image: payment:latest
+          imagePullPolicy: Never
           resources:
             limits:
               memory: "250Mi"
