@@ -45,7 +45,7 @@ def execute_conn(conn_id: str):
 @app.post('/commit_tx/<conn_id>')
 def commit_transaction(conn_id: str):
     conn = pool.getconn(conn_id)
-    commit(conn, conn_id)
+    commit(conn)
     return "Success", 200
 
 @app.post('/cancel_tx/<conn_id>')
@@ -53,7 +53,7 @@ def cancel_transaction(conn_id: str):
     conn = pool.getconn(conn_id)
     conn.rollback()
     conn.close()
-    pool.putconn(conn, conn_id, True)
+    pool.putconn(conn)
     return "Success", 200
 
 
@@ -75,4 +75,4 @@ def execute(conn, sql):
 def commit(conn, conn_id = None):
     conn.commit()
     conn.close()
-    pool.putconn(conn, conn_id, True)
+    pool.putconn(conn)
