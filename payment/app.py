@@ -2,6 +2,7 @@ from flask import Flask, request
 import requests
 import random
 import re
+import sys
 # from time import strftime
 
 import cmi
@@ -18,7 +19,7 @@ app = Flask("payment-service")
 def create_user():
     conn_id = request.headers.get("conn_id")
     while True:
-        user_id = random.randrange(999999999) #''.join(random.choices(string.ascii_uppercase + string.digits, k = 9))
+        user_id = random.randrange(sys.maxsize) #''.join(random.choices(string.ascii_uppercase + string.digits, k = 9))
         response = cmi.exec("INSERT INTO accounts (user_id, credit) VALUES (%s, 0) RETURNING user_id", [user_id], conn_id)
         if response.status_code == 200:
             result = response.json()

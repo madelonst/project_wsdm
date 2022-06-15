@@ -1,6 +1,7 @@
 from flask import Flask, request
 # import requests
 import random
+import sys
 # from time import strftime
 
 import cmi
@@ -17,7 +18,7 @@ app = Flask("stock-service")
 def create_item(price: int):
     conn_id = request.headers.get("conn_id")
     while True:
-        item_id = random.randrange(999999999) #''.join(random.choices(string.ascii_uppercase + string.digits, k = 9))
+        item_id = random.randrange(sys.maxsize) #''.join(random.choices(string.ascii_uppercase + string.digits, k = 9))
         response = cmi.exec("INSERT INTO stock (item_id, unit_price, stock_qty) VALUES (%s,%s, 0) RETURNING item_id", [item_id, price], conn_id)
         if response.status_code == 200:
             result = response.json()
