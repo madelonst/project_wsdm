@@ -7,7 +7,7 @@ import random
 
 db_url = "postgresql://root@cockroachdb-public:26257/defaultdb?sslmode=disable"
 
-pool = pool.SimpleConnectionPool(1, 20, db_url)
+pool = pool.SimpleConnectionPool(1, 100, db_url)
 
 app = Flask("connection-manager-service")
 
@@ -29,7 +29,6 @@ def execute_simple():
     commit(conn)
     return result
 
-
 @app.get('/start_tx')
 def start_transaction():
     conn_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
@@ -40,7 +39,9 @@ def start_transaction():
 def execute_conn(conn_id: str):
     conn = pool.getconn(conn_id)
     sql = request.json
-    return execute(conn, sql)
+    result = execute(conn, sql)
+    pool.putconn(conn)
+    return result
 
 @app.post('/commit_tx/<conn_id>')
 def commit_transaction(conn_id: str):

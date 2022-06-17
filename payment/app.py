@@ -36,7 +36,7 @@ def find_user(user_id: int):
 @app.post('/add_funds/<user_id>/<amount>')
 def add_credit(user_id: str, amount: int):
     conn_id = request.headers.get("conn_id")
-    return cmi.get_status("UPDATE accounts SET credit = credit + %s WHERE user_id=%s AND credit + %s > credit",
+    return cmi.get_status("UPDATE accounts SET credit = credit + %s WHERE user_id=%s AND credit + %s >= credit",
                           [amount, user_id, amount], conn_id)
 
 @app.post('/pay/<user_id>/<order_id>/<amount>')
@@ -46,7 +46,7 @@ def remove_credit(user_id: str, order_id: str, amount: int):
     if not connheaderset:
         conn_id = cmi.start_tx()
 
-    _, status_code = cmi.get_status("UPDATE accounts SET credit = credit - CAST(%s AS NUMERIC) WHERE user_id=%s AND credit - CAST(%s AS NUMERIC) >= 0 AND CAST(%s AS NUMERIC) > 0",
+    _, status_code = cmi.get_status("UPDATE accounts SET credit = credit - CAST(%s AS NUMERIC) WHERE user_id=%s AND credit - CAST(%s AS NUMERIC) >= 0 AND CAST(%s AS NUMERIC) >= 0",
                           [amount, user_id, amount, amount], conn_id)
     if status_code != 200:
         if not connheaderset:
