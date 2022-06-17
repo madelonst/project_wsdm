@@ -49,3 +49,13 @@ but you can find any database you want in https://artifacthub.io/ and adapt the 
 Similarly to the `minikube` deployment but run the `deploy-charts-cluster.sh` in the helm step to also install an ingress to the cluster. 
 
 ***Requirements:*** You need to have access to kubectl of a k8s cluster.
+
+***Start Up***
+docker build order -t order:latest
+docker build payment -t payment:latest
+docker build stock -t stock:latest
+docker build connection_manager -t connection-manager:latest
+docker build db-init -t db-init:latest
+
+***Delete old minikubes***
+kubectl delete -f .\cockroachdb-statefulset.yaml -f .\connection-manager.yaml -f .\order-service.yaml -f .\payment-service.yaml -f .\stock-service.yaml -f .\ingress-service.yaml -f .\database-init.yaml

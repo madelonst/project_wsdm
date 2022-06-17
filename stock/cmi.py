@@ -31,7 +31,7 @@ def get_all(sql, params, conn_id = None):
     return '{"done": false}', 400
 
 def get_status(sql, params, conn_id = None):
-    response = exec(f"{sql} RETURNING TRUE AS done", params, conn_id)
+    response = exec(f"{sql} RETURNING TRUE AS done;", params, conn_id)
     if response.status_code == 200:
         result = response.json()
         if len(result) == 1:
@@ -55,7 +55,8 @@ def exec_psycopg(sql, params):
     except Exception as err:
         res = ReturnType()
         res.status_code = 500
-        res.json = lambda: err
+        error = err
+        res.json = lambda: error
         return res
     if cursor.description is None:
         result = cursor.fetchall()
