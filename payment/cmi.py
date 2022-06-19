@@ -58,27 +58,40 @@ def cancel_tx(cm):
     return
 
 def exec_psycopg(sql, params):
-    conn = pool.getconn()
+    try:
+        conn = pool.getconn()
+    except Exception as err:
+        print(f"Error getting connection\n{err}", flush=True)
+        return False
+
     cursor = conn.cursor()
+
     try:
         cursor.execute(sql, params)
     except Exception as err:
+        print(f"Error executing SQL: {sql}, {params}\n{err}", flush=True)
+        
+        cursor.close()
+        conn.rollback()
+        conn.close()
+        pool.putconn(conn)
+
         res = ReturnType()
         res.status_code = 500
         error = err
         res.json = lambda: error
         return res
+
     if cursor.description is None:
         result = cursor.fetchall()
     else:
         result = [dict((cursor.description[i][0], value) \
             for i, value in enumerate(row)) for row in cursor.fetchall()]
+
     cursor.close()
     conn.commit()
     conn.close()
     pool.putconn(conn)
-
-
 
     res = ReturnType()
     res.status_code = 200
