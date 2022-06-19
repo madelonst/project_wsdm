@@ -5,14 +5,13 @@ Basic project structure with Python's Flask and Redis.
 
 ### Project structure
 
-* `env`
-    Folder containing the Redis env variables for the docker-compose deployment
-    
-* `helm-config` 
-   Helm chart values for Redis and ingress-nginx
-        
 * `k8s`
     Folder containing the kubernetes deployments, apps and services for the ingress, order, payment and stock services.
+* `db-init`
+    Folder containing the db-init application logic and dockerfile. This ensures the database is setup correctly when initalizing the clusters. 
+
+* `connection_manager`
+    Folder containing the connection manager application logic and dockerfile
     
 * `order`
     Folder containing the order application logic and dockerfile. 
@@ -67,6 +66,9 @@ After coding the REST endpoint logic run `docker-compose up --build` in the base
 * ```minikube dashboard```
 
 ***For windows users:*** ```minikube tunnel```
+
+#### Replicas
+To check for the number of replicas the command ```kubectl get hpa``` can be used. 
 
 #### Deletion of old deployments
 
