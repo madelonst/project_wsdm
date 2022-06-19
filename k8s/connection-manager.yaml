@@ -43,3 +43,7 @@ spec:
           env:
             - name: DATABASE_URL
               value: "cockroachdb-public"
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP

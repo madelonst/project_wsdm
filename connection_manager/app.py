@@ -3,9 +3,12 @@ from flask import Flask, request, jsonify
 from psycopg2 import pool
 import string
 import random
+import os
 # from time import strftime
 
 db_url = "postgresql://root@cockroachdb-public:26257/defaultdb?sslmode=disable"
+
+ip = os.getenv('MY_POD_IP')
 
 pool = pool.SimpleConnectionPool(1, 100, db_url)
 
@@ -33,7 +36,7 @@ def execute_simple():
 def start_transaction():
     conn_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     conn = pool.getconn(conn_id)
-    return conn_id, 200
+    return f"{ip}:{conn_id}", 200
 
 @app.post('/exec/<conn_id>')
 def execute_conn(conn_id: str):
