@@ -22,7 +22,9 @@ def exec(sql, params, cm):
 def get_one(sql, params, cm = None):
     response = exec(sql, params, cm)
     if response.status_code == 200:
-        return response.json()[0], 200
+        result = response.json()
+        if len(result) == 1:
+            return result[0], 200
     return '{"done": false}', 400
 
 def get_all(sql, params, cm):
@@ -70,7 +72,7 @@ def exec_psycopg(sql, params):
         cursor.execute(sql, params)
     except Exception as err:
         print(f"Error executing SQL: {sql}, {params}\n{err}", flush=True)
-        
+
         cursor.close()
         conn.rollback()
         conn.close()

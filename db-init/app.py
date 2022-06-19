@@ -17,7 +17,7 @@ with conn.cursor() as cur:
     )
     conn.commit()
     cur.execute(
-        "CREATE TABLE order_headers (order_id INT PRIMARY KEY, user_id INT, paid BOOLEAN);"
+        "CREATE TABLE order_headers (order_id INT PRIMARY KEY, user_id INT, paid BOOLEAN, total_cost NUMERIC);"
     )
     conn.commit()
     cur.execute(
