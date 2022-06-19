@@ -27,7 +27,7 @@ def after_request(response):
 @app.post('/create_user')
 def create_user():
     while True:
-        user_id = random.randrange(-9223372036854775807, 9223372036854775807) #Cockroachdb max and min INT values (64-bit)
+        user_id = random.randrange(0, 9223372036854775807) #Cockroachdb max and min INT values (64-bit)
         response = cmi.exec("INSERT INTO accounts (user_id, credit) VALUES (%s, 0) RETURNING user_id",
             [user_id], g.cm)
         if response.status_code == 200:

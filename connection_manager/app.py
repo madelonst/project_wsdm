@@ -4,7 +4,7 @@ from psycopg2 import pool
 import string
 import random
 import os
-# from time import strftime
+from time import strftime
 
 db_url = "postgresql://root@cockroachdb-public:26257/defaultdb?sslmode=disable"
 
@@ -18,11 +18,16 @@ def close_db_connection():
     pool.closeall()
 atexit.register(close_db_connection)
 
-# @app.after_request
-# def after_request(response):
-#     timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
-#     print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
-#     return response
+@app.before_request
+def after_request():
+    timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+    print(f'{timestamp} [Flask start request] {request.remote_addr} {request.method} {request.scheme} {request.full_path}', flush=True)
+
+@app.after_request
+def after_request(response):
+    timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+    print(f'{timestamp} [Flask end request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
+    return response
 
 @app.post('/exec')
 def execute_simple():

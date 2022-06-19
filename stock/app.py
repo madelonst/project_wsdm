@@ -26,7 +26,7 @@ def after_request(response):
 @app.post('/item/create/<price>')
 def create_item(price: int):
     while True:
-        item_id = random.randrange(-9223372036854775807, 9223372036854775807) #Cockroachdb max and min INT values (64-bit)
+        item_id = random.randrange(0, 9223372036854775807) #Cockroachdb max and min INT values (64-bit)
         response = cmi.exec("INSERT INTO stock (item_id, unit_price, stock_qty) VALUES (%s,%s, 0) RETURNING item_id",
             [item_id, price], g.cm)
         if response.status_code == 200:
