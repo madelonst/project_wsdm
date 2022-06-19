@@ -16,7 +16,7 @@ class ReturnType(object):
 def exec(sql, params, cm):
     if (cm):
         ip, conn_id = cm
-        return requests.post(f"http://{ip}/exec/{conn_id}", json= {"sql": sql, "params": params})
+        return requests.post(f"http://{ip}:5000/exec/{conn_id}", json= {"sql": sql, "params": params})
     return exec_psycopg(sql, params)
 
 def get_one(sql, params, cm = None):
@@ -47,13 +47,13 @@ def start_tx():
 
 def commit_tx(cm):
     ip, conn_id = cm
-    while requests.post(f"http://{ip}/commit_tx/{conn_id}").status_code != 200:
+    while requests.post(f"http://{ip}:5000/commit_tx/{conn_id}").status_code != 200:
         pass
     return
 
 def cancel_tx(cm):
     ip, conn_id = cm
-    while requests.post(f"http://{ip}/cancel_tx/{conn_id}").status_code != 200:
+    while requests.post(f"http://{ip}:5000/cancel_tx/{conn_id}").status_code != 200:
         pass
     return
 

@@ -27,7 +27,7 @@ def after_request(response):
 @app.post('/create_user')
 def create_user():
     while True:
-        user_id = random.randrange(999999999) #''.join(random.choices(string.ascii_uppercase + string.digits, k = 9))
+        user_id = random.randrange(-9223372036854775807, 9223372036854775807) #Cockroachdb max and min INT values (64-bit)
         response = cmi.exec("INSERT INTO accounts (user_id, credit) VALUES (%s, 0) RETURNING user_id",
             [user_id], g.cm)
         if response.status_code == 200:
@@ -79,14 +79,14 @@ def cancel_payment(user_id: str, order_id: str):
         g.cm = tuple(g.cmstr.split(':'))
 
     _, status_code = cmi.get_status("UPDATE accounts SET credit = credit + CAST((SELECT SUM(unit_price) FROM order_items WHERE order_id=%s) AS INTEGER) WHERE user_id=%s",
-                              [order_id, user_id], g.cm)
+        [order_id, user_id], g.cm)
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
         return '{"done": false}', 400
     
     _, status_code = cmi.get_status("UPDATE order_headers SET paid = FALSE WHERE order_id=%s",
-        [order_id], conn_id)
+        [order_id], g.cm)
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
