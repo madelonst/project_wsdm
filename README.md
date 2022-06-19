@@ -37,38 +37,36 @@ After coding the REST endpoint logic run `docker-compose up --build` in the base
 
 #### minikube (local k8s cluster)
 
-This setup is for local k8s testing to see if your k8s config works before deploying to the cloud. 
-First deploy your database using helm by running the `deploy-charts-minicube.sh` file (in this example the DB is Redis 
-but you can find any database you want in https://artifacthub.io/ and adapt the script). Then adapt the k8s configuration files in the
-`\k8s` folder to match your system and then run `kubectl apply -f .` in the k8s folder.
-
-***Requirements:*** You need to have minikube (with ingress enabled) and helm installed on your machine.
-
-#### kubernetes cluster (managed k8s cluster in the cloud)
-
-Similarly to the `minikube` deployment but run the `deploy-charts-cluster.sh` in the helm step to also install an ingress to the cluster. 
-
-***Requirements:*** You need to have access to kubectl of a k8s cluster.
-
 ***Start Up***
-minikube start
-minikube addons enable ingress
-minikube docker-env 
+* ```minikube start --extra-config=kubelet.housekeeping-interval=10s```
+* ```minikube addons enable metrics-server```
+* ```minikube addons enable ingress```
+* ```minikube docker-env``` 
 
-COPY PASTE OUTPUT AND RUN EXAMPLE: @FOR /f "tokens=*" %i IN ('minikube -p minikube docker-env --shell cmd') DO @%i
+COPY PASTE OUTPUT: 
 
-cd ./k8s/
+***For Windows users also run:*** ```@FOR /f "tokens=*" %i IN ('minikube -p minikube docker-env --shell cmd') DO @%i```
 
-docker build order -t order:latest
-docker build payment -t payment:latest
-docker build stock -t stock:latest
-docker build connection_manager -t connection-manager:latest
-docker build db-init -t db-init:latest
+```cd ./k8s/```
 
-./create_cluster.sh
+* ```docker build order -t order:latest```
+* ```docker build payment -t payment:latest```
+* ```docker build stock -t stock:latest```
+* ```docker build connection_manager -t connection-manager:latest```
+* ```docker build db-init -t db-init:latest```
 
-minikube tunnel
-minikube dashboard
+#### Create the cluster
+```./create_cluster.sh```
+
+#### Setup the auto scaling for the pods
+* ```kubectl -n kube-system rollout status deployment metrics-server```
+* ```kubectl autoscale deployment stock-deployment --cpu-percent=50 --min=1 --max=3```
+* ```kubectl autoscale deployment order-deployment --cpu-percent=50 --min=1 --max=3```
+* ```kubectl autoscale deployment payment-deployment --cpu-percent=50 --min=1 --max=3```
+
+#### Connecting to the dashboard
+* ```minikube tunnel```
+* ```minikube dashboard```
 
 ***Delete old minikubes***
-kubectl delete -f .\cockroachdb-statefulset.yaml -f .\connection-manager.yaml -f .\order-service.yaml -f .\payment-service.yaml -f .\stock-service.yaml -f .\ingress-service.yaml -f .\database-init.yaml
+```kubectl delete -f .\cockroachdb-statefulset.yaml -f .\connection-manager.yaml -f .\order-service.yaml -f .\payment-service.yaml -f .\stock-service.yaml -f .\ingress-service.yaml -f .\database-init.yaml```
