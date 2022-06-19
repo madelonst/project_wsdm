@@ -41,13 +41,9 @@ After coding the REST endpoint logic run `docker-compose up --build` in the base
 * ```minikube start --extra-config=kubelet.housekeeping-interval=10s```
 * ```minikube addons enable metrics-server```
 * ```minikube addons enable ingress```
-* ```minikube docker-env``` 
-
-COPY PASTE OUTPUT: 
+* ```minikube docker-env``` (Copy paste final line of output) 
 
 ***For Windows users also run:*** ```@FOR /f "tokens=*" %i IN ('minikube -p minikube docker-env --shell cmd') DO @%i```
-
-```cd ./k8s/```
 
 * ```docker build order -t order:latest```
 * ```docker build payment -t payment:latest```
@@ -56,6 +52,7 @@ COPY PASTE OUTPUT:
 * ```docker build db-init -t db-init:latest```
 
 #### Create the cluster
+```cd ./k8s/```
 ```./create_cluster.sh```
 
 #### Setup the auto scaling for the pods
@@ -65,8 +62,11 @@ COPY PASTE OUTPUT:
 * ```kubectl autoscale deployment payment-deployment --cpu-percent=50 --min=1 --max=3```
 
 #### Connecting to the dashboard
-* ```minikube tunnel```
+
 * ```minikube dashboard```
 
-***Delete old minikubes***
+***For windows users:*** ```minikube tunnel```
+
+#### Deletion of old deployments
+
 ```kubectl delete -f .\cockroachdb-statefulset.yaml -f .\connection-manager.yaml -f .\order-service.yaml -f .\payment-service.yaml -f .\stock-service.yaml -f .\ingress-service.yaml -f .\database-init.yaml```
