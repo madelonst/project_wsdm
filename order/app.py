@@ -12,6 +12,8 @@ payment_url = "http://payment-service:5000"
 
 @app.before_request
 def before_request():
+    timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+    print(f'{timestamp} [Flask start request] {request.remote_addr} {request.method} {request.scheme} {request.full_path}', flush=True)
     g.cmstr = request.headers.get("cm")
     if g.cmstr != None:
         g.already_using_connection_manager = True
@@ -23,7 +25,7 @@ def before_request():
 @app.after_request
 def after_request(response):
     timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
-    print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
+    print(f'{timestamp} [Flask finish request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
     return response
 
 @app.post('/create/<user_id>')
