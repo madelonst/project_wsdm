@@ -1,9 +1,7 @@
-# Web-scale Data Management Project Template
-
-Basic project structure with Python's Flask and Redis. 
-**You are free to use any web framework in any language and any database you like for this project.**
+# Web-scale Data Management Project - Group 4
 
 ### Project structure
+
 
 * `k8s`
     Folder containing the kubernetes deployments, apps and services for the ingress, order, payment and stock services.
