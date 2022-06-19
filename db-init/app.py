@@ -5,7 +5,7 @@ conn = psycopg2.connect(db_url)
 
 with conn.cursor() as cur:
     cur.execute(
-        "DROP TABLE stock;"
+        "DROP TABLE IF EXISTS stock;"
     )
     conn.commit()
     cur.execute(
@@ -13,7 +13,7 @@ with conn.cursor() as cur:
     )
     conn.commit()
     cur.execute(
-        "DROP TABLE order_headers;"
+        "DROP TABLE IF EXISTS order_headers;"
     )
     conn.commit()
     cur.execute(
@@ -21,7 +21,7 @@ with conn.cursor() as cur:
     )
     conn.commit()
     cur.execute(
-        "DROP TABLE order_items;"
+        "DROP TABLE IF EXISTS order_items;"
     )
     conn.commit()
     cur.execute(
@@ -29,7 +29,7 @@ with conn.cursor() as cur:
     )
     conn.commit()
     cur.execute(
-        "DROP TABLE accounts;"
+        "DROP TABLE IF EXISTS accounts;"
     )
     conn.commit()
     cur.execute(

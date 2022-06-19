@@ -3,9 +3,12 @@ from flask import Flask, request, jsonify
 from psycopg2 import pool
 import string
 import random
+import os
 # from time import strftime
 
 db_url = "postgresql://root@cockroachdb-public:26257/defaultdb?sslmode=disable"
+
+ip = os.getenv('MY_POD_IP')
 
 pool = pool.SimpleConnectionPool(1, 100, db_url)
 
@@ -33,7 +36,75 @@ def execute_simple():
 def start_transaction():
     conn_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     conn = pool.getconn(conn_id)
-    return conn_id, 200
+    return f"{ip}:{conn_id}", 200
+
+@app.post('/get_success/<conn_id>')
+def get_success(conn_id: str):
+    try:
+        conn = pool.getconn(conn_id)
+    except Exception:
+        return "", 400
+    
+    cursor = conn.cursor()
+    body = request.json
+
+    try:
+        cursor.execute(body["sql"], body["params"])
+    except Exception as err:
+        cursor.close()
+        conn.rollback()
+        conn.close()
+        return "", 400
+    cursor.close()
+    conn.commit()
+    conn.close()
+    return "", 200
+
+@app.post('/get_one/<conn_id>')
+def get_one(conn_id: str):
+    try:
+        conn = pool.getconn(conn_id)
+    except Exception:
+        return result, 200
+
+    cursor = conn.cursor()
+    body = request.json
+
+    try:
+        cursor.execute(body["sql"], body["params"])
+    except Exception as err:
+        cursor.close()
+        conn.rollback()
+        conn.close()
+        return "", 400
+    result = dict((cursor.description[i][0], value) for i, value in enumerate(cursor.fetchone()))
+    cursor.close()
+    conn.commit()
+    conn.close()
+    return result, 200
+
+@app.post('/get_single/<conn_id>')
+def get_single(conn_id: str):
+    try:
+        conn = pool.getconn(conn_id)
+    except Exception:
+        return result, 200
+
+    cursor = conn.cursor()
+    body = request.json
+
+    try:
+        cursor.execute(body["sql"], body["params"])
+    except Exception as err:
+        cursor.close()
+        conn.rollback()
+        conn.close()
+        return "", 400
+    result = cursor.fetchone()[0]
+    cursor.close()
+    conn.commit()
+    conn.close()
+    return result, 200
 
 @app.post('/exec/<conn_id>')
 def execute_conn(conn_id: str):
