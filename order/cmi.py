@@ -8,7 +8,7 @@ URL = "http://connection-manager-service:5000"
 
 db_url = "postgresql://root@cockroachdb-public:26257/defaultdb?sslmode=disable"
 
-pool = pool.SimpleConnectionPool(1, 20, db_url)
+pool = pool.SimpleConnectionPool(1, 200, db_url)
 
 DONE_FALSE = Response(
     response='{"done": false}',

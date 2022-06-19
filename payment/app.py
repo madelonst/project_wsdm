@@ -1,8 +1,13 @@
-from flask import Flask, request, g
+from psycogreen.gevent import patch_psycopg
+patch_psycopg()
+from gevent import monkey
+monkey.patch_all()
+
+from flask import Flask, request, g, Response
 import requests
 import random
 import re
-from time import strftime
+# from time import strftime
 
 import cmi
 
@@ -18,11 +23,11 @@ def before_request():
         g.already_using_connection_manager = False
         g.cm = None
 
-@app.after_request
-def after_request(response):
-    timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
-    print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
-    return response
+# @app.after_request
+# def after_request(response):
+#     timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+#     print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
+#     return response
 
 @app.post('/create_user')
 def create_user():
@@ -30,10 +35,19 @@ def create_user():
         user_id = random.randrange(0, 9223372036854775807) #Cockroachdb max and min INT values (64-bit)
         response = cmi.exec("INSERT INTO accounts (user_id, credit) VALUES (%s, 0) RETURNING user_id",
             [user_id], g.cm)
+        if not response or not response.status_code:
+            print(response, flush=True)
+            return cmi.DONE_FALSE
+
         if response.status_code == 200:
             result = response.json()
             if len(result) == 1:
-                return result[0], 200
+                if not result[0]["user_id"]:
+                    print("ERROR 2", result[0], flush=True)
+                return Response(
+                    response=str(result[0]).replace("'", "\""),
+                    status=200,
+                    mimetype="application/json")
 
 @app.get('/find_user/<user_id>')
 def find_user(user_id: int):
