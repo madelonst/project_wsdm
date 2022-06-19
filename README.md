@@ -57,9 +57,10 @@ After coding the REST endpoint logic run `docker-compose up --build` in the base
 
 #### Setup the auto scaling for the pods
 * ```kubectl -n kube-system rollout status deployment metrics-server```
-* ```kubectl autoscale deployment stock-deployment --cpu-percent=50 --min=1 --max=3```
-* ```kubectl autoscale deployment order-deployment --cpu-percent=50 --min=1 --max=3```
-* ```kubectl autoscale deployment payment-deployment --cpu-percent=50 --min=1 --max=3```
+* ```kubectl autoscale deployment stock-deployment --cpu-percent=50 --min=1 --max=5```
+* ```kubectl autoscale deployment order-deployment --cpu-percent=50 --min=1 --max=5```
+* ```kubectl autoscale deployment payment-deployment --cpu-percent=50 --min=1 --max=5```
+* ```kubectl autoscale deployment connection-manager-deployment --cpu-percent=50 --min=1 --max=3```
 
 #### Connecting to the dashboard
 
