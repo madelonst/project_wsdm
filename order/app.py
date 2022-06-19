@@ -1,4 +1,4 @@
-from flask import Flask, request, g
+from flask import Flask, request, g, Response
 import requests
 import random
 from time import strftime
@@ -48,13 +48,13 @@ def remove_order(order_id):
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
-        return '{"done": false}', 400
+        return 
 
     _, status_code = cmi.get_status("DELETE FROM order_headers WHERE order_id=%s", [order_id], g.cm)
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
 
     if not g.already_using_connection_manager:
         cmi.commit_tx(g.cm)
@@ -71,13 +71,13 @@ def add_item(order_id, item_id):
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
 
     response = requests.get(f"{stock_url}/find/{item_id}", headers={"cm": g.cmstr})
     if response.status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
     price = response.json()["price"]
 
     data, status_code = cmi.get_status("UPDATE order_headers SET total_cost=total_cost+%s WHERE order_id=%s",
@@ -85,7 +85,7 @@ def add_item(order_id, item_id):
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
     
     if not g.already_using_connection_manager:
         cmi.commit_tx(g.cm)
@@ -106,7 +106,7 @@ def remove_item(order_id, item_id):
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLING TX 1", flush=True)
             cmi.cancel_tx(g.cm)
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLED TX 1", flush=True)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
     if data["count"] == 0:
         cmi.exec("DELETE FROM order_items WHERE order_id=%s AND item_id=%s",
             [order_id, item_id], g.cm)
@@ -119,7 +119,7 @@ def remove_item(order_id, item_id):
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLING TX", flush=True)
             cmi.cancel_tx(g.cm)
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLED TX", flush=True)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
     price = response.json()["price"]
 
     print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "STARTING QUERY 2", flush=True)
@@ -131,7 +131,7 @@ def remove_item(order_id, item_id):
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLING TX 2", flush=True)
             cmi.cancel_tx(g.cm)
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLED TX 2", flush=True)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
 
     print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "COMMITING", flush=True)
 
@@ -163,7 +163,7 @@ def checkout(order_id):
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLING TX 1", flush=True)
             cmi.cancel_tx(g.cm)
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLED TX 1", flush=True)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
     user_id = data["user_id"]
     total_price = data["total_cost"]
     print(total_price, flush=True)
@@ -176,7 +176,7 @@ def checkout(order_id):
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLING TX 3", flush=True)
             cmi.cancel_tx(g.cm)
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLED TX 3", flush=True)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
 
     print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "STARTING QUERY 2", flush=True)
     data, status_code = cmi.get_one("SELECT coalesce(json_object_agg(item_id::string, count), '{}'::json) AS items FROM order_items WHERE order_id=%s",
@@ -187,7 +187,7 @@ def checkout(order_id):
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLING TX 2", flush=True)
             cmi.cancel_tx(g.cm)
             print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLED TX 2", flush=True)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
     items = data["items"]
     
     for item_id, count in items.items():
@@ -199,7 +199,7 @@ def checkout(order_id):
                 print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLING TX", flush=True)
                 cmi.cancel_tx(g.cm)
                 print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "CANCELLED TX", flush=True)
-            return '{"done": false}', 400
+            return cmi.DONE_FALSE
 
     if not g.already_using_connection_manager:
         print(strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], "COMMITTING TX", flush=True)

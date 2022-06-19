@@ -2,7 +2,7 @@
 
 import requests
 from psycopg2 import pool
-from flask import jsonify
+from flask import Response
 
 URL = "http://connection-manager-service:5000"
 
@@ -10,6 +10,14 @@ db_url = "postgresql://root@cockroachdb-public:26257/defaultdb?sslmode=disable"
 
 pool = pool.SimpleConnectionPool(1, 20, db_url)
 
+DONE_FALSE = Response(
+    response='{"done": false}',
+    status=400,
+    mimetype="application/json")
+DONE_TRUE = Response(
+    response='{"done": true}',
+    status=200,
+    mimetype="application/json")
 
 class ReturnType(object):
     pass
@@ -25,13 +33,13 @@ def get_one(sql, params, cm = None):
         result = response.json()
         if len(result) == 1:
             return result[0], 200
-    return '{"done": false}', 400
+    return DONE_FALSE
 
 def get_all(sql, params, cm):
     response = exec(sql, params, cm)
     if response.status_code == 200:
         return {"items": response.json()}, 200
-    return '{"done": false}', 400
+    return DONE_FALSE
 
 def get_status(sql, params, cm):
     response = exec(f"{sql} RETURNING TRUE AS done;", params, cm)
@@ -39,7 +47,7 @@ def get_status(sql, params, cm):
         result = response.json()
         if len(result) == 1:
             return result[0], 200
-    return '{"done": false}', 400
+    return DONE_FALSE
 
 def start_tx():
     response = requests.get(f"{URL}/start_tx")

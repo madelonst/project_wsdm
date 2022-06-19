@@ -59,14 +59,14 @@ def remove_credit(user_id: str, order_id: str, amount: int):
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
     
     _, status_code = cmi.get_status("UPDATE order_headers SET paid = TRUE WHERE order_id=%s AND user_id=%s AND paid = FALSE",
         [order_id, user_id], g.cm)
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
 
     if not g.already_using_connection_manager:
         cmi.commit_tx(g.cm)
@@ -83,14 +83,14 @@ def cancel_payment(user_id: str, order_id: str):
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
     
     _, status_code = cmi.get_status("UPDATE order_headers SET paid = FALSE WHERE order_id=%s",
         [order_id], g.cm)
     if status_code != 200:
         if not g.already_using_connection_manager:
             cmi.cancel_tx(g.cm)
-        return '{"done": false}', 400
+        return cmi.DONE_FALSE
 
     if not g.already_using_connection_manager:
         cmi.commit_tx(g.cm)
