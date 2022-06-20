@@ -47,7 +47,7 @@ def get_status(sql, params, cm):
         result = response.json()
         if len(result) == 1:
             return result[0], 200
-    return DONE_FALSE
+    return '{"done": false}', 400
 
 def start_tx():
     response = requests.get(f"{URL}/start_tx")
