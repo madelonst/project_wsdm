@@ -1,5 +1,4 @@
 # Web-scale Data Management Project - Group 4
-
 Aaron van Diepen
 Thomas Eckhardt
 Justin Oosterbaan
@@ -8,14 +7,14 @@ Jasper Teunissen
 
 ### Project structure
 
-* `env`
-    Folder containing the Redis env variables for the docker-compose deployment
-    
-* `helm-config` 
-   Helm chart values for Redis and ingress-nginx
-        
+
 * `k8s`
     Folder containing the kubernetes deployments, apps and services for the ingress, order, payment and stock services.
+* `db-init`
+    Folder containing the db-init application logic and dockerfile. This ensures the database is setup correctly when initalizing the clusters. 
+
+* `connection_manager`
+    Folder containing the connection manager application logic and dockerfile
     
 * `order`
     Folder containing the order application logic and dockerfile. 
@@ -40,15 +39,40 @@ After coding the REST endpoint logic run `docker-compose up --build` in the base
 
 #### minikube (local k8s cluster)
 
-This setup is for local k8s testing to see if your k8s config works before deploying to the cloud. 
-First deploy your database using helm by running the `deploy-charts-minicube.sh` file (in this example the DB is Redis 
-but you can find any database you want in https://artifacthub.io/ and adapt the script). Then adapt the k8s configuration files in the
-`\k8s` folder to match your system and then run `kubectl apply -f .` in the k8s folder.
+***Start Up***
+* ```minikube start --extra-config=kubelet.housekeeping-interval=10s```
+* ```minikube addons enable metrics-server```
+* ```minikube addons enable ingress```
+* ```minikube docker-env``` (Copy paste final line of output) 
 
-***Requirements:*** You need to have minikube (with ingress enabled) and helm installed on your machine.
+***For Windows users also run:*** ```@FOR /f "tokens=*" %i IN ('minikube -p minikube docker-env --shell cmd') DO @%i```
 
-#### kubernetes cluster (managed k8s cluster in the cloud)
+* ```docker build order -t order:latest```
+* ```docker build payment -t payment:latest```
+* ```docker build stock -t stock:latest```
+* ```docker build connection_manager -t connection-manager:latest```
+* ```docker build db-init -t db-init:latest```
 
-Similarly to the `minikube` deployment but run the `deploy-charts-cluster.sh` in the helm step to also install an ingress to the cluster. 
+#### Create the cluster
+```cd ./k8s/```
+```./create_cluster.sh```
 
-***Requirements:*** You need to have access to kubectl of a k8s cluster.
+#### Setup the auto scaling for the pods (Recommended to not use currently as it causes inconsistency due to being queried during startup)
+* ```kubectl -n kube-system rollout status deployment metrics-server```
+* ```kubectl autoscale deployment stock-deployment --cpu-percent=50 --min=1 --max=5```
+* ```kubectl autoscale deployment order-deployment --cpu-percent=50 --min=1 --max=5```
+* ```kubectl autoscale deployment payment-deployment --cpu-percent=50 --min=1 --max=5```
+* ```kubectl autoscale deployment connection-manager-deployment --cpu-percent=50 --min=1 --max=3```
+
+#### Connecting to the dashboard
+
+* ```minikube dashboard```
+
+***For windows users:*** ```minikube tunnel```
+
+#### Replicas
+To check for the number of replicas the command ```kubectl get hpa``` can be used. 
+
+#### Deletion of old deployments
+
+```kubectl delete -f .\cockroachdb-statefulset.yaml -f .\connection-manager.yaml -f .\order-service.yaml -f .\payment-service.yaml -f .\stock-service.yaml -f .\ingress-service.yaml -f .\database-init.yaml```

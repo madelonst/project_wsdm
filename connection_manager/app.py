@@ -3,11 +3,16 @@ from flask import Flask, request, jsonify
 from psycopg2 import pool
 import string
 import random
-# from time import strftime
+import os
+from time import strftime
 
-db_url = "postgresql://root@lb:26257/defaultdb?sslmode=disable"
+db_url = "postgresql://root@cockroachdb-public:26257/defaultdb?sslmode=disable"
 
-pool = pool.SimpleConnectionPool(1, 20, db_url)
+ip = os.getenv('MY_POD_IP')
+
+pool = pool.SimpleConnectionPool(1, 100, db_url)
+
+conns = {}
 
 app = Flask("connection-manager-service")
 
@@ -15,45 +20,47 @@ def close_db_connection():
     pool.closeall()
 atexit.register(close_db_connection)
 
-# @app.after_request
-# def after_request(response):
-#     timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
-#     print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
-#     return response
+@app.before_request
+def after_request():
+    timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+    print(f'{timestamp} [Flask start request] {request.remote_addr} {request.method} {request.scheme} {request.full_path}', flush=True)
 
-@app.post('/exec')
-def execute_simple():
-    conn = pool.getconn()
-    sql = request.json
-    result = execute(conn, sql)
-    commit(conn)
-    return result
-
+@app.after_request
+def after_request(response):
+    timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+    print(f'{timestamp} [Flask end request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
+    return response
 
 @app.get('/start_tx')
 def start_transaction():
     conn_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
-    conn = pool.getconn(conn_id)
-    return conn_id, 200
+    conn = pool.getconn()
+    conns[conn_id] = conn
+    return f"{ip}:{conn_id}", 200
 
 @app.post('/exec/<conn_id>')
 def execute_conn(conn_id: str):
-    conn = pool.getconn(conn_id)
+    conn = conns[conn_id]
     sql = request.json
-    return execute(conn, sql)
+    print(sql, flush=True)
+    result = execute(conn, sql)
+    print(result, flush=True)
+    return result
 
 @app.post('/commit_tx/<conn_id>')
 def commit_transaction(conn_id: str):
-    conn = pool.getconn(conn_id)
-    commit(conn, conn_id)
+    conn = conns[conn_id]
+    conn.commit()
+    del conns[conn_id]
+    pool.putconn(conn)
     return "Success", 200
 
 @app.post('/cancel_tx/<conn_id>')
 def cancel_transaction(conn_id: str):
-    conn = pool.getconn(conn_id)
+    conn = conns[conn_id]
     conn.rollback()
-    conn.close()
-    pool.putconn(conn, conn_id, True)
+    del conns[conn_id]
+    pool.putconn(conn)
     return "Success", 200
 
 
@@ -71,8 +78,3 @@ def execute(conn, sql):
             for i, value in enumerate(row)) for row in cursor.fetchall()]
     cursor.close()
     return jsonify(result), 200
-
-def commit(conn, conn_id = None):
-    conn.commit()
-    conn.close()
-    pool.putconn(conn, conn_id, True)

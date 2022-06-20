@@ -1,73 +1,105 @@
 #helpers file for accessing connection_manager
-
 import requests
 from psycopg2 import pool
-from flask import jsonify
+from flask import Response
 
-URL = "http://connection-manager:5000"
+URL = "http://connection-manager-service:5000"
 
-db_url = "postgresql://root@lb:26257/defaultdb?sslmode=disable"
+db_url = "postgresql://root@cockroachdb-public:26257/defaultdb?sslmode=disable"
 
 pool = pool.SimpleConnectionPool(1, 20, db_url)
 
+DONE_FALSE = Response(
+    response='{"done": false}',
+    status=400,
+    mimetype="application/json")
+DONE_TRUE = Response(
+    response='{"done": true}',
+    status=200,
+    mimetype="application/json")
 
 class ReturnType(object):
     pass
-def exec(sql, params, conn_id = None):
-    if (conn_id):
-        return requests.post(f"{URL}/exec/{conn_id}", json= {"sql": sql, "params": params})
+
+def exec(sql, params, cm):
+    if (cm):
+        ip, conn_id = cm
+        return requests.post(f"http://{ip}:5000/exec/{conn_id}", json= {"sql": sql, "params": params})
     return exec_psycopg(sql, params)
 
-def get_one(sql, params, conn_id = None):
-    response = exec(sql, params, conn_id)
-    if response.status_code == 200:
-        return response.json()[0], 200
-    return '{"done": false}', 400
-
-def get_all(sql, params, conn_id = None):
-    response = exec(sql, params, conn_id)
-    if response.status_code == 200:
-        return {"items": response.json()}, 200
-    return '{"done": false}', 400
-
-def get_status(sql, params, conn_id = None):
-    response = exec(f"{sql} RETURNING TRUE AS done", params, conn_id)
+def get_one(sql, params, cm = None):
+    response = exec(sql, params, cm)
     if response.status_code == 200:
         result = response.json()
         if len(result) == 1:
             return result[0], 200
-    return '{"done": false}', 400
+    return DONE_FALSE
+
+def get_all(sql, params, cm):
+    response = exec(sql, params, cm)
+    if response.status_code == 200:
+        return {"items": response.json()}, 200
+    return DONE_FALSE
+
+def get_status(sql, params, cm):
+    response = exec(f"{sql} RETURNING TRUE AS done;", params, cm)
+    if response.status_code == 200:
+        result = response.json()
+        if len(result) == 1:
+            return result[0], 200
+    return DONE_FALSE
 
 def start_tx():
-    return requests.get(f"{URL}/start_tx").content.decode('utf-8')
+    response = requests.get(f"{URL}/start_tx")
+    while response.status_code != 200:
+        response = requests.get(f"{URL}/start_tx")
+    return response.content.decode("utf-8")
 
-def commit_tx(conn_id):
-    return requests.post(f"{URL}/commit_tx/{conn_id}")
+def commit_tx(cm):
+    ip, conn_id = cm
+    while requests.post(f"http://{ip}:5000/commit_tx/{conn_id}").status_code != 200:
+        pass
+    return
 
-def cancel_tx(conn_id):
-    return requests.post(f"{URL}/cancel_tx/{conn_id}")
+def cancel_tx(cm):
+    ip, conn_id = cm
+    while requests.post(f"http://{ip}:5000/cancel_tx/{conn_id}").status_code != 200:
+        pass
+    return
 
 def exec_psycopg(sql, params):
-    conn = pool.getconn()
+    try:
+        conn = pool.getconn()
+    except Exception as err:
+        print(f"Error getting connection\n{err}", flush=True)
+        return False
+
     cursor = conn.cursor()
+
     try:
         cursor.execute(sql, params)
     except Exception as err:
+        print(f"Error executing SQL: {sql}, {params}\n{err}", flush=True)
+
+        cursor.close()
+        conn.rollback()
+        pool.putconn(conn)
+
         res = ReturnType()
         res.status_code = 500
-        res.json = lambda: err
+        error = err
+        res.json = lambda: error
         return res
+
     if cursor.description is None:
         result = cursor.fetchall()
     else:
         result = [dict((cursor.description[i][0], value) \
             for i, value in enumerate(row)) for row in cursor.fetchall()]
+
     cursor.close()
     conn.commit()
-    conn.close()
     pool.putconn(conn)
-
-
 
     res = ReturnType()
     res.status_code = 200
