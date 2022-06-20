@@ -1,4 +1,9 @@
 # Web-scale Data Management Project - Group 4
+Aaron van Diepen
+Thomas Eckhardt
+Justin Oosterbaan
+Madelon Stol
+Jasper Teunissen
 
 ### Project structure
 
