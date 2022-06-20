@@ -1,7 +1,7 @@
 from flask import Flask, request, g
 # import requests
 import random
-from time import strftime
+# from time import strftime
 
 import cmi
 
@@ -9,6 +9,8 @@ app = Flask("stock-service")
 
 @app.before_request
 def before_request():
+    # timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+    # print(f'{timestamp} [Flask start request] {request.remote_addr} {request.method} {request.scheme} {request.full_path}', flush=True)
     g.cmstr = request.headers.get("cm")
     if g.cmstr != None:
         g.already_using_connection_manager = True
@@ -17,11 +19,11 @@ def before_request():
         g.already_using_connection_manager = False
         g.cm = None
 
-@app.after_request
-def after_request(response):
-    timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
-    print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
-    return response
+# @app.after_request
+# def after_request(response):
+#     timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+#     print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
+#     return response
 
 @app.post('/item/create/<price>')
 def create_item(price: int):

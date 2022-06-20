@@ -1,5 +1,4 @@
 #helpers file for accessing connection_manager
-
 import requests
 from psycopg2 import pool
 from flask import Response
@@ -21,6 +20,7 @@ DONE_TRUE = Response(
 
 class ReturnType(object):
     pass
+
 def exec(sql, params, cm):
     if (cm):
         ip, conn_id = cm
@@ -83,7 +83,6 @@ def exec_psycopg(sql, params):
 
         cursor.close()
         conn.rollback()
-        conn.close()
         pool.putconn(conn)
 
         res = ReturnType()
@@ -100,7 +99,6 @@ def exec_psycopg(sql, params):
 
     cursor.close()
     conn.commit()
-    conn.close()
     pool.putconn(conn)
 
     res = ReturnType()

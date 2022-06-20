@@ -51,7 +51,6 @@ def execute_conn(conn_id: str):
 def commit_transaction(conn_id: str):
     conn = conns[conn_id]
     conn.commit()
-    conn.close()
     del conns[conn_id]
     pool.putconn(conn)
     return "Success", 200
@@ -60,7 +59,6 @@ def commit_transaction(conn_id: str):
 def cancel_transaction(conn_id: str):
     conn = conns[conn_id]
     conn.rollback()
-    conn.close()
     del conns[conn_id]
     pool.putconn(conn)
     return "Success", 200

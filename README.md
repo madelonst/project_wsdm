@@ -52,7 +52,7 @@ After coding the REST endpoint logic run `docker-compose up --build` in the base
 ```cd ./k8s/```
 ```./create_cluster.sh```
 
-#### Setup the auto scaling for the pods
+#### Setup the auto scaling for the pods (Recommended to not use currently as it causes inconsistency due to being queried during startup)
 * ```kubectl -n kube-system rollout status deployment metrics-server```
 * ```kubectl autoscale deployment stock-deployment --cpu-percent=50 --min=1 --max=5```
 * ```kubectl autoscale deployment order-deployment --cpu-percent=50 --min=1 --max=5```

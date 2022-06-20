@@ -2,7 +2,7 @@ from flask import Flask, request, g
 import requests
 import random
 import re
-from time import strftime
+# from time import strftime
 
 import cmi
 
@@ -10,6 +10,8 @@ app = Flask("payment-service")
 
 @app.before_request
 def before_request():
+    # timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+    # print(f'{timestamp} [Flask start request] {request.remote_addr} {request.method} {request.scheme} {request.full_path}', flush=True)
     g.cmstr = request.headers.get("cm")
     if g.cmstr != None:
         g.already_using_connection_manager = True
@@ -18,11 +20,11 @@ def before_request():
         g.already_using_connection_manager = False
         g.cm = None
 
-@app.after_request
-def after_request(response):
-    timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
-    print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
-    return response
+# @app.after_request
+# def after_request(response):
+#     timestamp = strftime('[%Y-%m-%d %H:%M:%S]')
+#     print(f'{timestamp} [Flask request] {request.remote_addr} {request.method} {request.scheme} {request.full_path} {response.status}', flush=True)
+#     return response
 
 @app.post('/create_user')
 def create_user():
@@ -70,7 +72,7 @@ def remove_credit(user_id: str, order_id: str, amount: int):
 
     if not g.already_using_connection_manager:
         cmi.commit_tx(g.cm)
-    return '{"done": true}', 200
+    return cmi.DONE_TRUE
 
 @app.post('/cancel/<user_id>/<order_id>')
 def cancel_payment(user_id: str, order_id: str):
@@ -94,7 +96,7 @@ def cancel_payment(user_id: str, order_id: str):
 
     if not g.already_using_connection_manager:
         cmi.commit_tx(g.cm)
-    return '{"done": true}', 200
+    return cmi.DONE_TRUE
 
 #Changed to GET based on project document
 @app.get('/status/<user_id>/<order_id>')
